@@ -1,0 +1,41 @@
+# Agent instructions and skill libraries — not part of the app build
+CLAUDE.md
+AGENTS.md
+.agents/
+.claude/
+.aider-desk/
+
+# Clerk CLI state
+.clerk/
+
+# Environment files (secrets belong in the platform, not the image)
+.env*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS
+.DS_Store
+*.pem
+
+# Local build artifacts
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+coverage/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
