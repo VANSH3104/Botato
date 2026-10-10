@@ -5,6 +5,8 @@ import { PlusIcon } from "lucide-react"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { nanoid } from "nanoid"
 
+import { BotDialog } from "@/components/bot-dialog"
+
 export const dynamic = "force-dynamic"
 
 export default async function Page() {
@@ -25,10 +27,14 @@ export default async function Page() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button>
-            <PlusIcon data-icon="inline-start" />
-            Create a new bot
-          </Button>
+          <BotDialog
+            trigger={
+              <Button>
+                <PlusIcon data-icon="inline-start" />
+                Create a new bot
+              </Button>
+            }
+          />
         </EmptyContent>
       </Empty>
     </div>

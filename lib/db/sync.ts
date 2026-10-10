@@ -9,15 +9,19 @@ import { eq } from "drizzle-orm";
 export async function insertBot(params: {
   clerkId: string;
   name: string;
+  job?: string | null;
+  avatar?: string;
   instructions?: string | null;
 }) {
-  const { clerkId, name, instructions } = params;
+  const { clerkId, name, job, avatar, instructions } = params;
 
   const [row] = await db
     .insert(bots)
     .values({
       userId: clerkId,
       name,
+      job: job ?? null,
+      ...(avatar ? { avatar } : {}),
       instructions: instructions ?? null,
     })
     .returning();
