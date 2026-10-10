@@ -25,6 +25,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 3. Package & Environment Safety
 - Use `npm` for package management. Do not install new packages without user confirmation unless requested.
 - Do not delete, overwrite, or expose secrets in environment files (`.env*`).
+- **Database**: Only run `npm run db:push` to apply schema changes. Never run `db:migrate` (drizzle-kit migrate) or `db:generate` — this project does not use migration files; schema changes are applied directly to the live database via `db:push`.
 
 ## 4. Verification Workflow
 - Run typecheck (`npm run typecheck`) and linter (`npm run lint`) before finishing tasks to ensure no broken builds or regressions.
