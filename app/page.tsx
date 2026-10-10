@@ -1,35 +1,38 @@
-import { auth, clerkClient } from "@clerk/nextjs/server"
+import { auth } from "@clerk/nextjs/server"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Button } from "@/components/ui/button"
-import { syncClerkUser } from "@/lib/db/sync"
+import { PlusIcon } from "lucide-react"
+import Image from "next/image"
 
 export default async function Page() {
-  const { userId } = await auth.protect()
-
-  if (userId) {
-    const clerkUser = await (await clerkClient()).users.getUser(userId)
-    await syncClerkUser({
-      clerkId: clerkUser.id,
-      email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
-      name:
-        [clerkUser.firstName, clerkUser.lastName]
-          .filter(Boolean)
-          .join(" ") || clerkUser.username,
-    })
-  }
+  await auth.protect()
 
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia>
+            <Image
+              src="/bot-avatar.png"
+              alt=""
+              width={64}
+              height={64}
+              className="size-16 rounded-full object-cover"
+            />
+          </EmptyMedia>
+          <EmptyTitle>Meet your first bot</EmptyTitle>
+          <EmptyDescription>
+            Every bot gets its own personality, memory, and face. Spin one up and start the
+            conversation.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button>
+            <PlusIcon data-icon="inline-start" />
+            Create a new bot
+          </Button>
+        </EmptyContent>
+      </Empty>
     </div>
   )
 }

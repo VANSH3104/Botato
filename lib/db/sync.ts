@@ -1,39 +1,60 @@
 import { db } from "./client";
-import { users } from "./schema";
+import { bots } from "./schema";
 import { eq } from "drizzle-orm";
-import { randomUUID } from "node:crypto";
 
 /**
- * Upserts a Clerk user into the local `users` table.
- * Call this from a server component or route handler after auth resolves.
+ * Inserts a new bot for a Clerk user.
+ * The `userId` is the Clerk (third-party) user id.
  */
-export async function syncClerkUser(params: {
+export async function insertBot(params: {
   clerkId: string;
-  email: string;
-  name?: string | null;
+  name: string;
+  instructions?: string | null;
 }) {
-  const { clerkId, email, name } = params;
+  const { clerkId, name, instructions } = params;
 
-  await db
-    .insert(users)
+  const [row] = await db
+    .insert(bots)
     .values({
-      id: randomUUID(),
-      clerkId,
-      email,
-      name: name ?? null,
+      userId: clerkId,
+      name,
+      instructions: instructions ?? null,
     })
-    .onConflictDoUpdate({
-      target: users.clerkId,
-      set: { email, name: name ?? null, updatedAt: new Date() },
-    });
+    .returning();
+
+  return row;
 }
 
-export async function getUserByClerkId(clerkId: string) {
+export async function getBotByUserId(clerkId: string) {
   const [row] = await db
     .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId))
+    .from(bots)
+    .where(eq(bots.userId, clerkId))
     .limit(1);
 
   return row ?? null;
+}
+
+export async function getBotById(botId: string) {
+  const [row] = await db
+    .select()
+    .from(bots)
+    .where(eq(bots.id, botId))
+    .limit(1);
+
+  return row ?? null;
+}
+
+export async function updateBotSandbox(botId: string, sandboxId: string) {
+  const [row] = await db
+    .update(bots)
+    .set({ sandboxId })
+    .where(eq(bots.id, botId))
+    .returning();
+
+  return row ?? null;
+}
+
+export async function listBotsForUser(clerkId: string) {
+  return db.select().from(bots).where(eq(bots.userId, clerkId));
 }

@@ -1,30 +1,22 @@
-import { pgTable, text, timestamp, boolean, foreignKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, index } from "drizzle-orm/pg-core";
+import { nanoid } from "nanoid";
 
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  clerkId: text("clerk_id").notNull().unique(),
-  email: text("email").notNull(),
-  name: text("name"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const todos = pgTable(
-  "todos",
+export const bot = pgTable(
+  "bot",
   {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    userId: text("user_id").notNull(),
+    name: text("name").notNull(),
+    avatar: text("avatar")
       .notNull()
-      .references(() => users.id),
-    title: text("title").notNull(),
-    completed: boolean("completed").notNull().default(false),
+      .$defaultFn(() => nanoid()),
+    instructions: text("instructions"),
+    sandboxId: text("sandbox_id"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [users.id],
-    }),
-  ],
+  (table) => [index("bot_user_id_idx").on(table.userId)],
 );
+
+export const bots = bot;
