@@ -1,8 +1,21 @@
-import { auth } from "@clerk/nextjs/server"
+import { auth, clerkClient } from "@clerk/nextjs/server"
 import { Button } from "@/components/ui/button"
+import { syncClerkUser } from "@/lib/db/sync"
 
 export default async function Page() {
-  await auth.protect()
+  const { userId } = await auth.protect()
+
+  if (userId) {
+    const clerkUser = await (await clerkClient()).users.getUser(userId)
+    await syncClerkUser({
+      clerkId: clerkUser.id,
+      email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
+      name:
+        [clerkUser.firstName, clerkUser.lastName]
+          .filter(Boolean)
+          .join(" ") || clerkUser.username,
+    })
+  }
 
   return (
     <div className="flex min-h-svh p-6">
