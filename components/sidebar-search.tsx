@@ -44,16 +44,17 @@ export function SidebarSearch({ bots = [], className }: SidebarSearchProps) {
       <Button
         variant="ghost"
         onClick={() => setOpen(true)}
+        title="Search (⌘K)"
         className={cn(
           "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30",
           "flex items-center justify-between font-normal text-muted-foreground shadow-none",
           "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 cursor-pointer",
-          "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center",
+          "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:hover:bg-sidebar-accent group-data-[collapsible=icon]:hover:text-sidebar-foreground",
           className
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+        <div className="flex items-center gap-2 min-w-0 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center">
+          <SearchIcon className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:size-4" />
           <span className="truncate group-data-[collapsible=icon]:hidden">
             Search
           </span>

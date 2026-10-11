@@ -1,5 +1,4 @@
 import * as React from "react"
-import Link from "next/link"
 import { UserButton } from "@clerk/nextjs"
 
 import {
@@ -13,21 +12,23 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar"
-import { ChatAvatar } from "@/components/chat-avatar"
 import { SidebarHeaderActions } from "@/components/sidebar-header-actions"
 import { SidebarSearch } from "@/components/sidebar-search"
+import { SidebarChatList } from "@/components/sidebar-chat-list"
 import { getBots } from "@/queries/bots"
-import { formatChatDate } from "@/lib/utils"
 import type { Bot } from "@/lib/db/schema"
 
 const USER_BUTTON_APPEARANCE = {
   elements: {
-    rootBox: "w-full h-full self-stretch flex items-stretch",
+    rootBox:
+      "w-full h-full self-stretch flex items-stretch group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center",
     userButtonTrigger:
-      "w-full h-full self-stretch flex items-center gap-2 p-2 rounded-md text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring outline-hidden cursor-pointer !max-w-none !shadow-none",
-    userButtonBox: "w-full h-full flex items-center gap-2 flex-row",
-    userButtonAvatarBox: "size-8 shrink-0 rounded-full",
+      "w-full h-full self-stretch flex items-center gap-2 p-2 rounded-md text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring outline-hidden cursor-pointer !max-w-none !shadow-none group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center",
+    userButtonBox:
+      "w-full h-full flex items-center gap-2 flex-row group-data-[collapsible=icon]:justify-center",
+    userButtonAvatarBox: "size-8 shrink-0 rounded-full group-data-[collapsible=icon]:size-6",
     userButtonOuterIdentifier:
       "text-sm font-medium text-sidebar-foreground truncate text-left flex-1 group-data-[collapsible=icon]:hidden",
   },
@@ -41,7 +42,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
   const bots = initialBots ?? (await getBots())
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-col gap-2 p-2">
         <div className="flex flex-row items-center justify-end group-data-[collapsible=icon]:justify-center">
           <SidebarHeaderActions />
@@ -53,44 +54,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
         <SidebarGroup>
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent>
-            {bots.length === 0 ? (
-              <div className="px-2 py-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-                No chats yet
-              </div>
-            ) : (
-              <SidebarMenu>
-                {bots.map((bot) => (
-                  <SidebarMenuItem key={bot.id}>
-                    <SidebarMenuButton
-                      size="lg"
-                      render={<Link href={`/chats/${bot.id}`} />}
-                      className="h-auto py-2 px-2 gap-2.5 items-center group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0!"
-                      tooltip={bot.name}
-                    >
-                      <ChatAvatar
-                        seed={bot.avatar}
-                        className="size-8 shrink-0 rounded-md"
-                      />
-                      <div className="flex flex-1 flex-col min-w-0 text-left group-data-[collapsible=icon]:hidden">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium text-sidebar-foreground">
-                            {bot.name}
-                          </span>
-                          <span className="shrink-0 text-xs text-muted-foreground font-normal">
-                            {formatChatDate(bot.createdAt)}
-                          </span>
-                        </div>
-                        {(bot as Bot & { lastChat?: string | null }).lastChat?.trim() ? (
-                          <span className="truncate text-xs text-muted-foreground">
-                            {(bot as Bot & { lastChat?: string | null }).lastChat?.trim()}
-                          </span>
-                        ) : null}
-                      </div>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            )}
+            <SidebarChatList bots={bots} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
@@ -101,7 +65,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
             <SidebarMenuButton
               size="lg"
               render={<div />}
-              className="h-12 w-full p-0 hover:bg-transparent data-active:bg-transparent [&>div]:w-full [&>div]:h-full"
+              className="h-12 w-full p-0 hover:bg-transparent data-active:bg-transparent [&>div]:w-full [&>div]:h-full group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
             >
               <UserButton
                 showName
@@ -111,6 +75,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }
