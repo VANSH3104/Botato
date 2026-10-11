@@ -1,6 +1,6 @@
 import * as React from "react"
+import Link from "next/link"
 import { UserButton } from "@clerk/nextjs"
-import { formatDistanceToNowStrict } from "date-fns"
 
 import {
   Sidebar,
@@ -16,19 +16,10 @@ import {
 } from "@/components/ui/sidebar"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { SidebarHeaderActions } from "@/components/sidebar-header-actions"
+import { SidebarSearch } from "@/components/sidebar-search"
 import { getBots } from "@/queries/bots"
+import { formatChatDate } from "@/lib/utils"
 import type { Bot } from "@/lib/db/schema"
-
-function formatChatDate(date: Date | string | number | null | undefined): string {
-  if (!date) return ""
-  try {
-    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date
-    const diff = formatDistanceToNowStrict(d)
-    return diff === "0 seconds" ? "just now" : diff
-  } catch {
-    return ""
-  }
-}
 
 const USER_BUTTON_APPEARANCE = {
   elements: {
@@ -51,8 +42,11 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
 
   return (
     <Sidebar>
-      <SidebarHeader className="flex flex-row items-center justify-end p-2 group-data-[collapsible=icon]:justify-center">
-        <SidebarHeaderActions />
+      <SidebarHeader className="flex flex-col gap-2 p-2">
+        <div className="flex flex-row items-center justify-end group-data-[collapsible=icon]:justify-center">
+          <SidebarHeaderActions />
+        </div>
+        <SidebarSearch bots={bots} />
       </SidebarHeader>
 
       <SidebarContent>
@@ -69,6 +63,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
                   <SidebarMenuItem key={bot.id}>
                     <SidebarMenuButton
                       size="lg"
+                      render={<Link href={`/chats/${bot.id}`} />}
                       className="h-auto py-2 px-2 gap-2.5 items-center group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0!"
                       tooltip={bot.name}
                     >
