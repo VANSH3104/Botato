@@ -1,14 +1,27 @@
 "use client"
 
+import * as React from "react"
 import { UserButton } from "@clerk/nextjs"
+import { PlusIcon, UsersIcon } from "lucide-react"
+
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { BotDialog } from "@/components/bot-dialog"
 
 const USER_BUTTON_APPEARANCE = {
   elements: {
@@ -23,26 +36,62 @@ const USER_BUTTON_APPEARANCE = {
 } satisfies Parameters<typeof UserButton>[0]["appearance"]
 
 export function AppSidebar() {
+  const [botDialogOpen, setBotDialogOpen] = React.useState(false)
+
   return (
-    <Sidebar>
-      <SidebarContent />
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              render={<div />}
-              className="h-12 w-full p-0 hover:bg-transparent data-active:bg-transparent [&>div]:w-full [&>div]:h-full"
+    <>
+      <Sidebar>
+        <SidebarHeader className="flex flex-row items-center justify-end p-2 group-data-[collapsible=icon]:justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-8 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground"
+                />
+              }
             >
-              <UserButton
-                showName
-                appearance={USER_BUTTON_APPEARANCE}
-              />
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+              <PlusIcon />
+              <span className="sr-only">Create</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setBotDialogOpen(true)}>
+                  <PlusIcon />
+                  <span>Create new bot</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <UsersIcon />
+                  <span>Create group chat</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarHeader>
+
+        <SidebarContent />
+
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                size="lg"
+                render={<div />}
+                className="h-12 w-full p-0 hover:bg-transparent data-active:bg-transparent [&>div]:w-full [&>div]:h-full"
+              >
+                <UserButton
+                  showName
+                  appearance={USER_BUTTON_APPEARANCE}
+                />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+
+      <BotDialog open={botDialogOpen} onOpenChange={setBotDialogOpen} />
+    </>
   )
 }
 
