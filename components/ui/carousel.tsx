@@ -95,7 +95,7 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return
-    onSelect(api) // eslint-disable-line react-hooks/set-state-in-effect -- initialising embla carousel state from the api requires a synchronous setState in the effect.
+    onSelect(api)
     api.on("reInit", onSelect)
     api.on("select", onSelect)
 
