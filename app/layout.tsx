@@ -2,7 +2,6 @@ import { ClerkProvider } from "@clerk/nextjs"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
-import { AuthControls } from "@/components/auth-controls"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toast"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -35,7 +34,6 @@ export default function RootLayout({
         <ClerkProvider>
           <ThemeProvider>
             <TooltipProvider>
-              <AuthControls />
               {children}
               <Toaster />
             </TooltipProvider>

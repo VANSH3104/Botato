@@ -45,6 +45,13 @@ export const createBotInputSchema = insertBotSchema
     instructions: z.string().trim().optional(),
   });
 
+export const updateBotInputSchema = createBotInputSchema
+  .extend({
+    id: z.string().min(1, "Bot ID is required"),
+  });
+
+export type UpdateBotInput = z.infer<typeof updateBotInputSchema>;
+
 export type InsertBot = z.infer<typeof insertBotSchema>;
 export type Bot = z.infer<typeof selectBotSchema>;
 export type CreateBotInput = z.infer<typeof createBotInputSchema>;
