@@ -309,8 +309,8 @@ export function BotDialog({
             </Button>
           </div>
 
-          {/* Form fields & actions */}
-          <form id="bot-dialog-form" onSubmit={handleSubmit(onSubmit)}>
+          {/* Form fields */}
+          <form id="create-bot-form" onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup className="gap-4">
               <Field data-invalid={!!errors.name}>
                 <FieldLabel htmlFor="bot-name">Name</FieldLabel>
@@ -322,9 +322,7 @@ export function BotDialog({
                 />
                 <FieldError errors={[errors.name]} />
               </Field>
-            </FieldGroup>
 
-            <FieldGroup className="mt-4 gap-4">
               <Field data-invalid={!!errors.job}>
                 <FieldLabel htmlFor="bot-job">Job</FieldLabel>
                 <Input
@@ -349,51 +347,50 @@ export function BotDialog({
                 <FieldError errors={[errors.instructions]} />
               </Field>
             </FieldGroup>
-
-            <DialogFooter className="mt-6 flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-              {isEditing ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => setConfirmDeleteOpen(true)}
-                  disabled={isSubmitting || isDeleting}
-                  className="w-full sm:w-auto"
-                >
-                  <Trash2Icon data-icon="inline-start" className="size-4" />
-                  Delete bot
-                </Button>
-              ) : (
-                <div />
-              )}
-              <div className="flex w-full sm:w-auto items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setOpen(false)}
-                  disabled={isSubmitting || isDeleting}
-                  className="flex-1 sm:flex-initial"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || isDeleting}
-                  className="flex-1 sm:flex-initial"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Spinner data-icon="inline-start" />
-                      {isEditing ? "Saving..." : "Creating..."}
-                    </>
-                  ) : isEditing ? (
-                    "Save changes"
-                  ) : (
-                    "Create bot"
-                  )}
-                </Button>
-              </div>
-            </DialogFooter>
           </form>
+
+          {/* Dialog Footer */}
+          <DialogFooter className="mt-2 flex-row items-center justify-between sm:justify-between">
+            {isEditing ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setConfirmDeleteOpen(true)}
+                disabled={isSubmitting || isDeleting}
+              >
+                <Trash2Icon data-icon="inline-start" className="size-4" />
+                Delete bot
+              </Button>
+            ) : (
+              <div />
+            )}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isSubmitting || isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="create-bot-form"
+                disabled={isSubmitting || isDeleting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Spinner data-icon="inline-start" />
+                    {isEditing ? "Saving..." : "Creating..."}
+                  </>
+                ) : isEditing ? (
+                  "Save changes"
+                ) : (
+                  "Create bot"
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
