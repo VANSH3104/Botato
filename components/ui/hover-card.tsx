@@ -3,7 +3,19 @@
 import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
 import { cn } from "cn"
 
-function HoverCard({ ...props }: PreviewCardPrimitive.Root.Props) {
+function HoverCard({
+  openDelay: _1,
+  closeDelay: _2,
+  delay: _3,
+  ...props
+}: PreviewCardPrimitive.Root.Props & {
+  openDelay?: number
+  closeDelay?: number
+  delay?: number
+}) {
+  void _1
+  void _2
+  void _3
   return <PreviewCardPrimitive.Root data-slot="hover-card" {...props} />
 }
 

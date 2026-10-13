@@ -12,9 +12,9 @@ export default async function DashboardLayout({
   const defaultOpen = sidebarState === undefined ? true : sidebarState === "true"
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen}>
+    <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
       <AppSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="h-full min-h-0 flex flex-col overflow-hidden">{children}</SidebarInset>
     </SidebarProvider>
   )
 }

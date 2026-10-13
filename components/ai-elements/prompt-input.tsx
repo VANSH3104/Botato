@@ -416,12 +416,13 @@ export type PromptInputActionAddAttachmentsProps = ComponentProps<
 
 export const PromptInputActionAddAttachments = ({
   label = "Add photos or files",
+  onSelect,
   ...props
 }: PromptInputActionAddAttachmentsProps) => {
   const attachments = usePromptInputAttachments();
 
   const handleSelect = useCallback(
-    (e: Event) => {
+    (e: React.SyntheticEvent<HTMLDivElement, Event>) => {
       e.preventDefault();
       attachments.openFileDialog();
     },
@@ -449,8 +450,8 @@ export const PromptInputActionAddScreenshot = ({
   const attachments = usePromptInputAttachments();
 
   const handleSelect = useCallback(
-    async (event: Event) => {
-      onSelect?.(event);
+    async (event: React.SyntheticEvent<HTMLDivElement, Event>) => {
+      (onSelect as unknown as (e: unknown) => void)?.(event);
       if (event.defaultPrevented) {
         return;
       }
@@ -1238,7 +1239,7 @@ export const PromptInputSubmit = ({
         onStop();
         return;
       }
-      onClick?.(e);
+      (onClick as unknown as (e: unknown) => void)?.(e);
     },
     [isGenerating, onStop, onClick]
   );
@@ -1311,14 +1312,17 @@ export const PromptInputSelectValue = ({
   <SelectValue className={cn(className)} {...props} />
 );
 
-export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
+export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard> & {
+  openDelay?: number;
+  closeDelay?: number;
+};
 
 export const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
+  openDelay,
+  closeDelay,
   ...props
 }: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+  <HoverCard closeDelay={closeDelay} delay={openDelay} {...props} />
 );
 
 export type PromptInputHoverCardTriggerProps = ComponentProps<
