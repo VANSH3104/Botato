@@ -38,6 +38,12 @@ import { createBotInputSchema, type CreateBotInput, type Bot } from "@/lib/db/sc
 
 const BOT_PRESETS = [
   {
+    label: "General assistant",
+    name: "Botato",
+    job: "Helpful AI assistant",
+    instructions: "Be helpful, friendly, concise, and direct in your responses.",
+  },
+  {
     label: "Research assistant",
     name: "Ada",
     job: "Research assistant",
@@ -316,7 +322,7 @@ export function BotDialog({
                 <FieldLabel htmlFor="bot-name">Name</FieldLabel>
                 <Input
                   id="bot-name"
-                  placeholder="Ada"
+                  placeholder="Botato"
                   aria-invalid={!!errors.name}
                   {...register("name")}
                 />

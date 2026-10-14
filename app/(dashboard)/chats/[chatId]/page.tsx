@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
 import { getChat } from "@/chats/queries"
-import { ChatHeader } from "@/components/chat-header"
-import { Chat } from "@/components/chat"
+import { ChatWorkspace } from "@/components/chat-workspace"
 
 export default async function ChatPage({
   params,
@@ -15,10 +14,5 @@ export default async function ChatPage({
     notFound()
   }
 
-  return (
-    <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden bg-background">
-      <ChatHeader chat={chat} />
-      <Chat key={chat.id} chatId={chat.id} chat={chat} />
-    </div>
-  )
+  return <ChatWorkspace key={chat.id} chatId={chat.id} chat={chat} />
 }

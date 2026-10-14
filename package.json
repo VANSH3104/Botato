@@ -11,6 +11,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "test": "tsx --test tests/sandbox.test.ts",
+    "sandbox:dev": "PORT=4000 SANDBOX_API_KEY=test-secret npx tsx services/sandbox/src/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

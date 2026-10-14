@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { Monitor } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -11,9 +10,19 @@ import type { Chat } from "@/chats/queries"
 export interface ChatHeaderProps {
   chat: Chat
   className?: string
+  isDesktopOpen?: boolean
+  hasSandboxActivity?: boolean
+  onToggleDesktop?: () => void
+  onClearChat?: () => void
 }
 
-export function ChatHeader({ chat, className }: ChatHeaderProps) {
+export function ChatHeader({
+  chat,
+  className,
+  isDesktopOpen = false,
+  hasSandboxActivity = false,
+  onToggleDesktop,
+}: ChatHeaderProps) {
   // Ignore group chats for now; fall back to first chat member's information
   const firstMember = chat.bots?.[0] ?? chat.bot
   const targetBot = firstMember ?? chat.bot
@@ -61,13 +70,28 @@ export function ChatHeader({ chat, className }: ChatHeaderProps) {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Desktop"
-          className="size-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-          onClick={(e) => {
-            e.preventDefault()
-          }}
+          aria-label="Desktop Sandbox"
+          title={
+            isDesktopOpen
+              ? "Close Sandbox Desktop"
+              : hasSandboxActivity
+              ? "Sandbox active — click to view Terminal / Browser"
+              : "Open Sandbox Desktop"
+          }
+          className={`relative size-8 transition-colors ${
+            isDesktopOpen
+              ? "text-primary bg-primary/15 hover:bg-primary/20"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+          onClick={onToggleDesktop}
         >
           <Monitor className="size-5" />
+          {hasSandboxActivity && !isDesktopOpen && (
+            <span className="absolute top-1 right-1 flex size-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full size-2 bg-emerald-500" />
+            </span>
+          )}
         </Button>
       </div>
     </header>
