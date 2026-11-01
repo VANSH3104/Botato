@@ -693,11 +693,11 @@ function ChatInner({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-4 py-6"
+        className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6"
       >
         <div
           className={`max-w-2xl mx-auto w-full flex flex-col ${
-            messages.length === 0 ? "h-full justify-center" : "gap-6"
+            messages.length === 0 ? "h-full justify-center" : "gap-4 sm:gap-6"
           }`}
         >
           {messages.length === 0 ? (
@@ -751,7 +751,7 @@ function ChatInner({
                 if (isUser) {
                   return (
                     <div key={message.id} className="flex justify-end w-full">
-                      <div className="max-w-[75%] rounded-2xl bg-secondary px-4 py-2.5 text-sm text-secondary-foreground whitespace-pre-wrap break-words leading-relaxed shadow-xs">
+                      <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-secondary px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-secondary-foreground whitespace-pre-wrap break-words leading-relaxed shadow-xs">
                         {message.parts.map((part, i) => {
                           if (part.type === "text") {
                             return (
@@ -955,7 +955,7 @@ function ChatInner({
       </div>
 
       {/* Pinned prompt input bar at the bottom */}
-      <div className="p-4 bg-background border-t border-border shrink-0">
+      <div className="p-2.5 sm:p-4 bg-background border-t border-border shrink-0">
         <div className="max-w-2xl mx-auto w-full relative">
           {/* Interactive @ Mention Autocomplete Popup */}
           {chat.isGroup && mentionQuery !== null && matchingBots.length > 0 && (
@@ -1089,7 +1089,7 @@ function ChatInner({
                   </PromptInputSelect>
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground">
+                <div className="hidden sm:block text-xs text-muted-foreground">
                   Press Enter to send, Shift+Enter for new line
                 </div>
               )}
