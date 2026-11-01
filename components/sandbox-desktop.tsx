@@ -348,7 +348,7 @@ export function SandboxDesktop({
   if (!isOpen) return null;
 
   return (
-    <div className="flex flex-col w-full md:w-[480px] lg:w-[560px] xl:w-[620px] h-full border-l border-border bg-card text-card-foreground shadow-2xl transition-all duration-300 z-20 overflow-hidden">
+    <div className="fixed inset-0 z-50 md:static md:inset-auto flex flex-col w-full md:w-[480px] lg:w-[560px] xl:w-[620px] h-full md:border-l border-border bg-card text-card-foreground shadow-2xl transition-all duration-300 md:z-20 overflow-hidden">
       {/* Top Header Bar */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border bg-muted/40">
         <div className="flex items-center gap-2 min-w-0">
@@ -371,7 +371,7 @@ export function SandboxDesktop({
             <button
               onClick={handleCopySandboxId}
               title="Click to copy sandbox ID"
-              className="flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded bg-background border border-border/70 text-muted-foreground hover:text-foreground transition-colors truncate max-w-[140px]"
+              className="hidden sm:flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded bg-background border border-border/70 text-muted-foreground hover:text-foreground transition-colors truncate max-w-[140px]"
             >
               <span className="truncate">{sandboxId}</span>
               {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
@@ -380,11 +380,11 @@ export function SandboxDesktop({
 
           {bots && bots.length > 1 && (
             <div className="flex items-center gap-1.5 bg-background border border-border/70 rounded-md px-2 py-0.5 ml-1">
-              <span className="text-[10px] text-muted-foreground font-medium">Bot:</span>
+              <span className="text-[10px] text-muted-foreground font-medium hidden sm:inline">Bot:</span>
               <select
                 value={selectedBotId}
                 onChange={(e) => handleBotChange(e.target.value)}
-                className="bg-transparent text-xs text-foreground outline-none cursor-pointer font-medium"
+                className="bg-transparent text-xs text-foreground outline-none cursor-pointer font-medium max-w-[100px] truncate"
               >
                 {bots.map((b) => (
                   <option key={b.id} value={b.id} className="bg-popover text-popover-foreground">
@@ -424,11 +424,11 @@ export function SandboxDesktop({
       {/* Real Browser Viewport */}
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
             {/* Real Browser Navigation Bar */}
-            <div className="flex items-center gap-1.5 p-2 border-b border-border bg-muted/40">
+            <div className="flex items-center gap-1 sm:gap-1.5 p-2 border-b border-border bg-muted/40">
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                className="size-7 text-muted-foreground hover:text-foreground shrink-0"
                 onClick={handleBrowserBack}
                 disabled={browserHistoryIndex <= 0}
                 title="Back"
@@ -438,7 +438,7 @@ export function SandboxDesktop({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                className="size-7 text-muted-foreground hover:text-foreground shrink-0"
                 onClick={handleBrowserForward}
                 disabled={browserHistoryIndex >= browserHistory.length - 1}
                 title="Forward"
@@ -448,7 +448,7 @@ export function SandboxDesktop({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                className="size-7 text-muted-foreground hover:text-foreground shrink-0"
                 onClick={() => {
                   setBrowserIsLoading(true);
                   setBrowserKey((k) => k + 1);
@@ -460,7 +460,7 @@ export function SandboxDesktop({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 text-muted-foreground hover:text-foreground"
+                className="size-7 text-muted-foreground hover:text-foreground shrink-0 hidden sm:inline-flex"
                 onClick={() => navigateBrowser("https://en.wikipedia.org/wiki/Computer_security")}
                 title="Home"
               >
@@ -473,19 +473,19 @@ export function SandboxDesktop({
                   e.preventDefault();
                   navigateBrowser(browserInput);
                 }}
-                className="flex-1 flex items-center gap-1.5 px-2.5 py-1 rounded bg-background border border-border text-xs focus-within:ring-1 focus-within:ring-primary"
+                className="flex-1 min-w-0 flex items-center gap-1.5 px-2.5 py-1 rounded bg-background border border-border text-xs focus-within:ring-1 focus-within:ring-primary"
               >
                 <Lock className="size-3 text-emerald-500 shrink-0" />
                 <input
                   type="text"
                   value={browserInput}
                   onChange={(e) => setBrowserInput(e.target.value)}
-                  placeholder="Enter URL or search (e.g. cyber security guide)..."
-                  className="flex-1 bg-transparent outline-none text-xs text-foreground placeholder:text-muted-foreground"
+                  placeholder="Enter URL or search..."
+                  className="flex-1 min-w-0 bg-transparent outline-none text-xs text-foreground placeholder:text-muted-foreground"
                 />
                 <button
                   type="submit"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground shrink-0"
                   title="Navigate or Search"
                 >
                   <Search className="size-3" />
@@ -498,7 +498,7 @@ export function SandboxDesktop({
                   href={browserCurrentUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
                   title="Open in external browser window"
                 >
                   <ExternalLink className="size-3.5" />
