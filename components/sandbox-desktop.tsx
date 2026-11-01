@@ -2,18 +2,11 @@
 
 import * as React from "react";
 import {
-  Terminal,
-  FolderTree,
   Globe,
   RefreshCw,
-  Play,
   X,
-  FileText,
   Copy,
   Check,
-  Plus,
-  Loader2,
-  Trash2,
   ArrowRight,
   ArrowLeft,
   Lock,
@@ -353,19 +346,33 @@ export function SandboxDesktop({
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border bg-muted/40">
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center gap-1.5 shrink-0">
+            <span className="size-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-semibold tracking-tight">Live Browser</span>
+          </div>
+
+          <span
+            title={
+              isOnline === true
+                ? "Sandbox execution engine is connected."
+                : isOnline === false
+                ? "Sandbox engine is in standalone mode (services/sandbox container not detected)."
+                : "Checking sandbox status..."
+            }
+            className={`hidden xs:inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium border ${
+              isOnline === true
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                : isOnline === false
+                ? "bg-muted text-muted-foreground border-border"
+                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+            }`}
+          >
             <span
-              className={`size-2.5 rounded-full ${
-                isOnline === true
-                  ? "bg-emerald-500 animate-pulse"
-                  : isOnline === false
-                  ? "bg-rose-500"
-                  : "bg-amber-500 animate-ping"
+              className={`size-1.5 rounded-full ${
+                isOnline === true ? "bg-emerald-400" : isOnline === false ? "bg-muted-foreground" : "bg-amber-400 animate-pulse"
               }`}
             />
-            <span className="text-xs font-semibold tracking-tight">
-              {isOnline === true ? "Browser Online" : isOnline === false ? "Browser Offline" : "Connecting..."}
-            </span>
-          </div>
+            {isOnline === true ? "Sandbox Connected" : isOnline === false ? "Standalone" : "Checking..."}
+          </span>
 
           {sandboxId && (
             <button
@@ -461,8 +468,11 @@ export function SandboxDesktop({
                 variant="ghost"
                 size="icon"
                 className="size-7 text-muted-foreground hover:text-foreground shrink-0 hidden sm:inline-flex"
-                onClick={() => navigateBrowser("https://en.wikipedia.org/wiki/Computer_security")}
-                title="Home"
+                onClick={() => {
+                  setBrowserCurrentUrl("");
+                  setBrowserInput("");
+                }}
+                title="Home (Quick Launch)"
               >
                 <Home className="size-3.5" />
               </Button>
@@ -525,14 +535,31 @@ export function SandboxDesktop({
                   title="Botato Internal Browser"
                 />
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-muted-foreground h-full overflow-y-auto">
                   <div className="size-12 rounded-2xl bg-muted/60 border border-border flex items-center justify-center text-foreground mb-3">
-                    <Globe className="size-6 text-muted-foreground" />
+                    <Globe className="size-6 text-primary" />
                   </div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1">Botato Internal Browser</h3>
-                  <p className="text-xs text-muted-foreground max-w-xs">
-                    Type a URL or search query in the address bar above to navigate.
+                  <h3 className="text-sm font-semibold text-foreground mb-1">Botato Live Browser</h3>
+                  <p className="text-xs text-muted-foreground max-w-xs mb-4">
+                    Type any website URL or search query in the address bar above, or launch a quick site below:
                   </p>
+                  <div className="flex flex-wrap gap-2 justify-center max-w-sm">
+                    {[
+                      { label: "DuckDuckGo", url: "https://html.duckduckgo.com/html/?q=latest+ai+news" },
+                      { label: "Wikipedia", url: "https://en.wikipedia.org/wiki/Artificial_intelligence" },
+                      { label: "Hacker News", url: "https://news.ycombinator.com" },
+                      { label: "GitHub", url: "https://github.com/trending" },
+                    ].map((site) => (
+                      <button
+                        key={site.label}
+                        type="button"
+                        onClick={() => navigateBrowser(site.url)}
+                        className="text-xs px-2.5 py-1 rounded-md bg-muted/70 hover:bg-muted text-foreground border border-border/80 transition-colors cursor-pointer"
+                      >
+                        {site.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
