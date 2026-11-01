@@ -3,6 +3,7 @@
 import { Monitor } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { BotDialog } from "@/components/bot-dialog"
@@ -31,9 +32,10 @@ export function ChatHeader({
 
   return (
     <header
-      className={`flex h-12 w-full shrink-0 items-center justify-between border-b border-border bg-background px-4 ${className ?? ""}`}
+      className={`flex h-12 w-full shrink-0 items-center justify-between border-b border-border bg-background px-2.5 sm:px-4 ${className ?? ""}`}
     >
-      <div className="flex items-center min-w-0">
+      <div className="flex items-center min-w-0 gap-1 sm:gap-2">
+        <SidebarTrigger className="-ml-1 mr-0.5 sm:mr-1 shrink-0" />
         {chat.isGroup ? (
           <GroupChatDialog
             initialGroup={{
@@ -44,16 +46,16 @@ export function ChatHeader({
             trigger={
               <button
                 type="button"
-                className="group flex items-center gap-2.5 min-w-0 -my-1 -ml-1.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                className="group flex items-center gap-2 sm:gap-2.5 min-w-0 -my-1 -ml-1 sm:-ml-1.5 rounded-lg px-1.5 sm:px-2 py-1 text-left transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 aria-label={`Edit ${chat.name}`}
                 title="Edit group chat or manage bots"
               >
                 <GroupChatAvatar
                   bots={chat.bots}
                   seed={chat.avatar}
-                  className="size-8 shrink-0 rounded-md transition-transform group-hover:scale-105"
+                  className="size-7 sm:size-8 shrink-0 rounded-md transition-transform group-hover:scale-105"
                 />
-                <span className="truncate text-sm font-medium text-foreground">
+                <span className="truncate text-sm font-medium text-foreground max-w-[150px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-none">
                   {chat.name}
                 </span>
               </button>
@@ -65,27 +67,27 @@ export function ChatHeader({
             trigger={
               <button
                 type="button"
-                className="group flex items-center gap-2.5 min-w-0 -my-1 -ml-1.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                className="group flex items-center gap-2 sm:gap-2.5 min-w-0 -my-1 -ml-1 sm:-ml-1.5 rounded-lg px-1.5 sm:px-2 py-1 text-left transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 aria-label={`Edit ${firstMember?.name ?? chat.name}`}
                 title="Edit bot"
               >
                 <ChatAvatar
                   seed={firstMember?.avatar ?? chat.avatar}
-                  className="size-7.5 shrink-0 rounded-md transition-transform group-hover:scale-105"
+                  className="size-7 sm:size-7.5 shrink-0 rounded-md transition-transform group-hover:scale-105"
                 />
-                <span className="truncate text-sm font-medium text-foreground">
+                <span className="truncate text-sm font-medium text-foreground max-w-[150px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-none">
                   {firstMember?.name ?? chat.name}
                 </span>
               </button>
             }
           />
         ) : (
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <ChatAvatar
               seed={firstMember?.avatar ?? chat.avatar}
-              className="size-7.5 shrink-0 rounded-md"
+              className="size-7 sm:size-7.5 shrink-0 rounded-md"
             />
-            <span className="truncate text-sm font-medium text-foreground">
+            <span className="truncate text-sm font-medium text-foreground max-w-[150px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-none">
               {firstMember?.name ?? chat.name}
             </span>
           </div>
