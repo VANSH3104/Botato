@@ -182,7 +182,7 @@ export function GroupChatDialog({
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         {trigger && <DialogTrigger render={trigger as React.ReactElement} />}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[460px] sm:max-w-[460px]">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[460px] sm:max-w-[460px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? "Edit group chat" : "New group chat"}
@@ -246,37 +246,36 @@ export function GroupChatDialog({
               )}
             </Field>
 
-            <DialogFooter className="pt-2 flex items-center justify-between gap-2">
+            <DialogFooter className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
               {isEditing ? (
                 <Button
                   type="button"
                   variant="destructive"
-                  size="sm"
+                  className="w-full sm:w-auto cursor-pointer gap-1.5"
                   onClick={() => setIsDeleteDialogOpen(true)}
                   disabled={isSubmitting || isDeleting}
-                  className="cursor-pointer gap-1.5"
                 >
                   <Trash2Icon className="size-4" />
                   Delete group
                 </Button>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
                   disabled={isSubmitting || isDeleting}
-                  className="cursor-pointer"
+                  className="flex-1 sm:flex-initial cursor-pointer"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={!name.trim() || selectedBotIds.length === 0 || isSubmitting || isDeleting}
-                  className="cursor-pointer"
+                  className="flex-1 sm:flex-initial cursor-pointer"
                 >
                   {isSubmitting && <Spinner className="size-4 mr-1.5" />}
                   {isEditing ? "Save changes" : "Create group"}

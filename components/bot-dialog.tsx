@@ -263,7 +263,7 @@ export function BotDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerNode && <DialogTrigger render={triggerNode} />}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[460px] sm:max-w-[460px]">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[460px] sm:max-w-[460px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit bot" : "New bot"}</DialogTitle>
             <DialogDescription>
@@ -356,11 +356,12 @@ export function BotDialog({
           </form>
 
           {/* Dialog Footer */}
-          <DialogFooter className="mt-2 flex-row items-center justify-between sm:justify-between">
+          <DialogFooter className="mt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
             {isEditing ? (
               <Button
                 type="button"
                 variant="destructive"
+                className="w-full sm:w-auto"
                 onClick={() => setConfirmDeleteOpen(true)}
                 disabled={isSubmitting || isDeleting}
               >
@@ -368,12 +369,13 @@ export function BotDialog({
                 Delete bot
               </Button>
             ) : (
-              <div />
+              <div className="hidden sm:block" />
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-end">
               <Button
                 type="button"
                 variant="outline"
+                className="flex-1 sm:flex-initial"
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting || isDeleting}
               >
@@ -383,6 +385,7 @@ export function BotDialog({
                 type="submit"
                 form="create-bot-form"
                 disabled={isSubmitting || isDeleting}
+                className="flex-1 sm:flex-initial"
               >
                 {isSubmitting ? (
                   <>
