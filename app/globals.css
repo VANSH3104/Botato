@@ -127,3 +127,28 @@
     @apply font-sans;
     }
 }
+
+/* Clerk UserButton Customization: Avatar on left, name on right, hide branding footer */
+.cl-userButtonTrigger {
+  flex-direction: row-reverse !important;
+  justify-content: flex-end !important;
+}
+
+.cl-userButtonBox {
+  order: 1 !important;
+}
+
+.cl-userButtonOuterIdentifier {
+  order: 2 !important;
+}
+
+.cl-userButtonPopoverFooter,
+.cl-footerAction,
+.cl-footerActionLink,
+.cl-footer,
+.cl-internal-b3fm6y,
+.cl-internal-1dauvgg,
+.cl-developmentModeBadge,
+[data-localization-key="developmentMode"] {
+  display: none !important;
+}

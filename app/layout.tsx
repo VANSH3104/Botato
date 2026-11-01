@@ -31,7 +31,15 @@ export default function RootLayout({
       )}
     >
       <body>
-        <ClerkProvider>
+        <ClerkProvider
+          appearance={{
+            elements: {
+              footer: "!hidden hidden",
+              footerAction: "!hidden hidden",
+              userButtonPopoverFooter: "!hidden hidden",
+            },
+          }}
+        >
           <ThemeProvider>
             <TooltipProvider>
               {children}
