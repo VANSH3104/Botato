@@ -32,6 +32,9 @@ function buildAvatarSrc(seed: string): string {
  */
 export function ChatAvatar({ seed, animated = false, className }: ChatAvatarProps) {
   const src = buildAvatarSrc(seed)
+  const hasCustomSize = Boolean(
+    className && /(?:^|\s)(?:size-|w-|h-|max-w-|max-h-)/.test(className)
+  )
 
   return (
     <Image
@@ -40,7 +43,7 @@ export function ChatAvatar({ seed, animated = false, className }: ChatAvatarProp
       width={AVATAR_SIZE}
       height={AVATAR_SIZE}
       unoptimized
-      className={cn("size-8", animated && "animate-pulse", className)}
+      className={cn(!hasCustomSize && "size-8", animated && "animate-pulse", className)}
     />
   )
 }
