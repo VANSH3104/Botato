@@ -25,13 +25,13 @@ const SAMPLE_SCENARIOS = [
     tool: "browseWeb: https://en.wikipedia.org/wiki/Autonomous_agent",
   },
   {
-    label: "MCP App Integration",
-    prompt: "Connect GitHub MCP and list all open critical issues.",
-    bot: "Botato",
-    role: "Chief of Staff",
+    label: "Everyday Apps & MCP",
+    prompt: "@Ada search Google Drive for Q4 Roadmap, summarize key milestones, and post update to Slack.",
+    bot: "Ada",
+    role: "Workspace Assistant",
     response:
-      "Connected to GitHub MCP with zero-leak privacy token masking. Discovered 12 available tools: github_list_issues, github_create_pr, github_search_code. Scanned repository: 0 critical vulnerabilities reported.",
-    tool: "mcp_list_issues: { state: 'open', severity: 'critical' }",
+      "Connected to Google Drive and Slack MCP with zero-leak token masking. Retrieved 'Q4_Product_Roadmap.gdoc', extracted 3 key milestones, and dispatched an update summary to #product-team on Slack.",
+    tool: "mcp_google_drive_search + mcp_slack_post_message",
   },
 ];
 
@@ -54,7 +54,7 @@ export function LandingPlayground() {
 
         <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
           <Zap className="size-3 text-primary animate-pulse" />
-          <span>Groq LPU Engine Active</span>
+          <span>High-Speed Engine Active</span>
         </div>
       </div>
 

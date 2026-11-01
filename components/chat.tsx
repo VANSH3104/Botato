@@ -21,6 +21,7 @@ import {
   PromptInputSelectContent,
   PromptInputSelectItem,
   PromptInputSelectValue,
+  usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
@@ -35,6 +36,9 @@ import {
   Pencil,
   Zap,
   Sparkles,
+  Paperclip,
+  FileText,
+  X,
 } from "lucide-react"
 import { extractSnippetFromMessage } from "@/lib/utils"
 import type { UIMessage } from "ai"
@@ -384,6 +388,80 @@ function parseToolPart(rawPart: unknown) {
 
   if (!toolName) return null
   return { toolName, args, state, output }
+}
+
+function PromptInputAttachmentButton() {
+  const attachments = usePromptInputAttachments()
+  return (
+    <button
+      type="button"
+      onClick={attachments.openFileDialog}
+      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
+      title="Attach image or document"
+    >
+      <Paperclip className="size-4" />
+    </button>
+  )
+}
+
+function PromptInputAttachmentsPreview() {
+  const attachments = usePromptInputAttachments()
+  if (!attachments.files || attachments.files.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 border-b border-border/70 bg-muted/20">
+      {attachments.files.map((file) => {
+        const isImage = file.mediaType?.startsWith("image/") || file.url?.startsWith("data:image/")
+        return (
+          <div
+            key={file.id}
+            className="group relative flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg border border-border/80 bg-background text-xs shadow-2xs"
+          >
+            {isImage && file.url ? (
+              <img
+                src={file.url}
+                alt={file.filename || "Uploaded file"}
+                className="size-5 rounded object-cover"
+              />
+            ) : (
+              <FileText className="size-4 text-primary shrink-0" />
+            )}
+            <span className="max-w-[130px] truncate text-[11px] font-medium text-foreground">
+              {file.filename || "Attachment"}
+            </span>
+            <button
+              type="button"
+              onClick={() => attachments.remove(file.id)}
+              className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="Remove attachment"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PromptInputSubmitWrapper({
+  status,
+  stop,
+  hasText,
+}: {
+  status: string
+  stop: () => void
+  hasText: boolean
+}) {
+  const attachments = usePromptInputAttachments()
+  const disabled = !hasText && attachments.files.length === 0
+  return (
+    <PromptInputSubmit
+      status={status as Parameters<typeof PromptInputSubmit>[0]["status"]}
+      disabled={disabled}
+      onStop={stop}
+    />
+  )
 }
 
 export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatProps) {
@@ -739,7 +817,9 @@ function ChatInner({
   }, [messages, onSandboxActivity])
 
   const handleSubmit = (message: PromptInputMessage) => {
-    if (message.text.trim()) {
+    const hasText = Boolean(message.text.trim())
+    const hasFiles = Boolean(message.files && message.files.length > 0)
+    if (hasText || hasFiles) {
       if (chat.isGroup && chat.bots) {
         for (const b of chat.bots) {
           const nameClean = b.name.trim().toLowerCase()
@@ -751,7 +831,10 @@ function ChatInner({
         }
       }
       setMentionQuery(null)
-      sendMessage({ text: message.text })
+      sendMessage({
+        text: message.text || (hasFiles ? "Uploaded attachment" : ""),
+        files: message.files,
+      })
       setInput("")
       // Ensure we jump to bottom when user submits
       if (scrollContainerRef.current) {
@@ -899,10 +982,56 @@ function ChatInner({
                     .map((p) => (p as { text: string }).text)
                     .join("\n")
 
+                  const fileParts = message.parts.filter(
+                    (p) => p.type === "file" && typeof (p as Record<string, unknown>).url === "string"
+                  ) as Array<{ type: "file"; url: string; filename?: string; mediaType?: string }>
+
                   return (
                     <div key={message.id} className="group relative flex justify-end w-full">
-                      <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-secondary px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-secondary-foreground whitespace-pre-wrap break-words leading-relaxed shadow-xs">
-                        {renderUserMessageWithMentions(userText, chat.bots || [])}
+                      <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-secondary px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-secondary-foreground whitespace-pre-wrap break-words leading-relaxed shadow-xs space-y-2">
+                        {fileParts.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pb-0.5">
+                            {fileParts.map((file, fIdx) => {
+                              const isImg = file.mediaType?.startsWith("image/") || file.url.startsWith("data:image/")
+                              if (isImg) {
+                                return (
+                                  <a
+                                    key={fIdx}
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    className="block overflow-hidden rounded-xl border border-border/70 hover:opacity-90 transition-opacity max-w-[280px]"
+                                  >
+                                    <img
+                                      src={file.url}
+                                      alt={file.filename || "Attached image"}
+                                      className="max-h-60 w-auto rounded-xl object-contain bg-background/40"
+                                    />
+                                  </a>
+                                )
+                              }
+                              return (
+                                <a
+                                  key={fIdx}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                  className="flex items-center gap-2 p-2 rounded-lg bg-background/80 border border-border/70 text-xs text-foreground hover:bg-background transition-colors"
+                                >
+                                  <FileText className="size-4 text-primary shrink-0" />
+                                  <span className="truncate max-w-[160px] font-medium">
+                                    {file.filename || "Attachment"}
+                                  </span>
+                                </a>
+                              )
+                            })}
+                          </div>
+                        )}
+                        {userText && (
+                          <div>
+                            {renderUserMessageWithMentions(userText, chat.bots || [])}
+                          </div>
+                        )}
                       </div>
 
                       {/* Hover action bar for user messages */}
@@ -1100,7 +1229,7 @@ function ChatInner({
 
                                 <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono ml-auto">
                                   <Zap className="size-3 text-amber-500/80" />
-                                  <span>Groq LPU</span>
+                                  <span>Fast Inference</span>
                                 </span>
                               </div>
                             )}
@@ -1215,95 +1344,99 @@ function ChatInner({
           )}
 
           <PromptInput onSubmit={handleSubmit}>
+            <PromptInputAttachmentsPreview />
             <PromptInputTextarea
               ref={textareaRef}
               value={input}
               placeholder={
                 chat.isGroup
-                  ? `Message @${targetBot?.name || "bot"} (type @ to mention)...`
-                  : `Message ${bot?.name ?? chat.name}...`
+                  ? `Message @${targetBot?.name || "bot"} (type @ to mention, drop images or files)...`
+                  : `Message ${bot?.name ?? chat.name} (drop images or files)...`
               }
               onChange={handleInputChange}
               onKeyDown={handleTextareaKeyDown}
               className="min-h-[56px] text-sm py-3 px-3.5"
             />
             <PromptInputFooter className="px-3 pb-2.5 pt-1 flex items-center justify-between">
-              {chat.isGroup && chat.bots && chat.bots.length > 0 ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">Bot:</span>
-                  <PromptInputSelect
-                    value={selectedBotId}
-                    onValueChange={(val) => {
-                      if (typeof val === "string") setSelectedBotId(val)
-                    }}
-                  >
-                    <PromptInputSelectTrigger className="h-7.5 w-auto gap-1.5 px-2.5 text-xs rounded-lg border border-border/70 bg-muted/30 hover:bg-muted/70 transition-colors shadow-2xs">
-                      <PromptInputSelectValue placeholder="Select bot">
-                        {targetBot && (
-                          <span className="flex items-center gap-1.5 font-medium text-foreground">
-                            <ChatAvatar seed={targetBot.avatar} className="size-4 rounded-md" />
-                            <span>{targetBot.name}</span>
-                          </span>
-                        )}
-                      </PromptInputSelectValue>
-                    </PromptInputSelectTrigger>
-                    <PromptInputSelectContent
-                      align="start"
-                      side="top"
-                      sideOffset={8}
-                      alignItemWithTrigger={false}
-                      className="w-[300px] min-w-[280px] max-w-[calc(100vw-2rem)] p-1.5 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl z-50"
+              <div className="flex items-center gap-1.5 min-w-0">
+                <PromptInputAttachmentButton />
+                {chat.isGroup && chat.bots && chat.bots.length > 0 ? (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">Bot:</span>
+                    <PromptInputSelect
+                      value={selectedBotId}
+                      onValueChange={(val) => {
+                        if (typeof val === "string") setSelectedBotId(val)
+                      }}
                     >
-                      <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 mb-1 flex items-center justify-between">
-                        <span>Group Member Bots</span>
-                        <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
-                          type @ to tag
-                        </span>
-                      </div>
-                      {chat.bots.map((b) => {
-                        const isSelected = b.id === selectedBotId
-                        return (
-                          <PromptInputSelectItem
-                            key={b.id}
-                            value={b.id}
-                            indicator={false}
-                            className="cursor-pointer py-2 px-2.5 rounded-xl hover:bg-muted/80 data-[highlighted]:bg-muted transition-colors my-0.5"
-                          >
-                            <div className="flex items-start gap-2.5 w-full text-left">
-                              <ChatAvatar seed={b.avatar} className="size-6 shrink-0 rounded-lg mt-0.5" />
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-1.5">
-                                  <span className="font-semibold text-xs text-foreground">
-                                    {b.name}
-                                  </span>
-                                  {isSelected && (
-                                    <span className="text-[10px] text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
-                                      Active
+                      <PromptInputSelectTrigger className="h-7.5 w-auto gap-1.5 px-2.5 text-xs rounded-lg border border-border/70 bg-muted/30 hover:bg-muted/70 transition-colors shadow-2xs">
+                        <PromptInputSelectValue placeholder="Select bot">
+                          {targetBot && (
+                            <span className="flex items-center gap-1.5 font-medium text-foreground">
+                              <ChatAvatar seed={targetBot.avatar} className="size-4 rounded-md" />
+                              <span>{targetBot.name}</span>
+                            </span>
+                          )}
+                        </PromptInputSelectValue>
+                      </PromptInputSelectTrigger>
+                      <PromptInputSelectContent
+                        align="start"
+                        side="top"
+                        sideOffset={8}
+                        alignItemWithTrigger={false}
+                        className="w-[300px] min-w-[280px] max-w-[calc(100vw-2rem)] p-1.5 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl z-50"
+                      >
+                        <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 mb-1 flex items-center justify-between">
+                          <span>Group Member Bots</span>
+                          <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
+                            type @ to tag
+                          </span>
+                        </div>
+                        {chat.bots.map((b) => {
+                          const isSelected = b.id === selectedBotId
+                          return (
+                            <PromptInputSelectItem
+                              key={b.id}
+                              value={b.id}
+                              indicator={false}
+                              className="cursor-pointer py-2 px-2.5 rounded-xl hover:bg-muted/80 data-[highlighted]:bg-muted transition-colors my-0.5"
+                            >
+                              <div className="flex items-start gap-2.5 w-full text-left">
+                                <ChatAvatar seed={b.avatar} className="size-6 shrink-0 rounded-lg mt-0.5" />
+                                <div className="flex flex-col min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-1.5">
+                                    <span className="font-semibold text-xs text-foreground">
+                                      {b.name}
+                                    </span>
+                                    {isSelected && (
+                                      <span className="text-[10px] text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
+                                        Active
+                                      </span>
+                                    )}
+                                  </div>
+                                  {b.job && (
+                                    <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">
+                                      {b.job}
                                     </span>
                                   )}
                                 </div>
-                                {b.job && (
-                                  <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">
-                                    {b.job}
-                                  </span>
-                                )}
                               </div>
-                            </div>
-                          </PromptInputSelectItem>
-                        )
-                      })}
-                    </PromptInputSelectContent>
-                  </PromptInputSelect>
-                </div>
-              ) : (
-                <div className="hidden sm:block text-xs text-muted-foreground">
-                  Press Enter to send, Shift+Enter for new line
-                </div>
-              )}
-              <PromptInputSubmit
+                            </PromptInputSelectItem>
+                          )
+                        })}
+                      </PromptInputSelectContent>
+                    </PromptInputSelect>
+                  </div>
+                ) : (
+                  <div className="hidden sm:block text-xs text-muted-foreground ml-1">
+                    Press Enter to send, Shift+Enter for new line
+                  </div>
+                )}
+              </div>
+              <PromptInputSubmitWrapper
                 status={status}
-                disabled={!input.trim()}
-                onStop={stop}
+                stop={stop}
+                hasText={Boolean(input.trim())}
               />
             </PromptInputFooter>
           </PromptInput>

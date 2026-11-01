@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ShuffleIcon, Trash2Icon } from "lucide-react"
 import { nanoid } from "nanoid"
 import { useRouter, usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 import {
   Dialog,
@@ -143,7 +144,6 @@ export function BotDialog({
   // Reset form when dialog opens or initialBot changes
   React.useEffect(() => {
     if (open) {
-      setActiveTab("profile")
       if (initialBot) {
         reset({
           name: initialBot.name,
@@ -165,6 +165,9 @@ export function BotDialog({
 
   const setOpen = React.useCallback(
     (value: boolean) => {
+      if (value) {
+        setActiveTab("profile")
+      }
       if (!isControlled) {
         setInternalOpen(value)
       }
@@ -267,7 +270,12 @@ export function BotDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerNode && <DialogTrigger render={triggerNode} />}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[460px] sm:max-w-[460px] max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className={cn(
+            "w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto transition-all duration-200",
+            activeTab === "mcp" ? "sm:max-w-2xl" : "max-w-[460px] sm:max-w-[460px]"
+          )}
+        >
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit bot" : "New bot"}</DialogTitle>
             <DialogDescription>
@@ -300,7 +308,7 @@ export function BotDialog({
               }`}
             >
               <span>MCP & Apps</span>
-              <span className="text-[10px] px-1 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
                 Safe
               </span>
             </button>

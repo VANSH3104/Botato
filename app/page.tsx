@@ -2,7 +2,6 @@ import * as React from "react";
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import {
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   Terminal,
@@ -10,12 +9,13 @@ import {
   Bot,
   Zap,
   Lock,
-  Cpu,
-  Layers,
   CheckCircle2,
   ExternalLink,
+  Code2,
+  Database,
+  FileText,
 } from "lucide-react";
-import { BotatoLogo, BotatoIcon } from "@/components/logo";
+import { BotatoLogo, BotatoIcon, GitHubIcon } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { LandingHeroDemo } from "@/components/landing-hero-demo";
 import { LandingPlayground } from "@/components/landing-playground";
@@ -40,22 +40,30 @@ export default async function LandingPage() {
             <a href="#features" className="hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="#demo" className="hover:text-foreground transition-colors">
-              Live Demo
-            </a>
             <a href="#sandboxes" className="hover:text-foreground transition-colors">
               Sandboxes &amp; Browser
             </a>
             <a href="#mcp" className="hover:text-foreground transition-colors">
-              Privacy &amp; MCP
+              Connected Apps &amp; MCP
             </a>
             <a href="#simulator" className="hover:text-foreground transition-colors">
               Playground
             </a>
           </nav>
 
-          {/* Auth Actions */}
+          {/* Auth & GitHub Actions */}
           <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/VANSH3104/Botato"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-card/60 hover:bg-muted text-foreground transition-colors"
+              title="View source on GitHub"
+            >
+              <GitHubIcon className="size-3.5" />
+              <span>GitHub</span>
+            </a>
+
             {userId ? (
               <div className="flex items-center gap-3">
                 <Button render={<Link href="/dashboard" />} size="sm" className="gap-1.5 font-medium">
@@ -81,14 +89,14 @@ export default async function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-        {/* Subtle Ambient Background Glows */}
+        {/* Ambient Glows */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-purple-600/15 via-primary/10 to-cyan-500/15 blur-3xl pointer-events-none rounded-full" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
           {/* Top Pill Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-xs font-medium text-primary shadow-xs">
             <Zap className="size-3.5 text-primary animate-pulse" />
-            <span>Autonomous Multi-Agent AI Teams • Built-in Cloud Sandboxes</span>
+            <span>Autonomous Multi-Agent AI Teams • Built-in Cloud Sandboxes • Open Source</span>
           </div>
 
           {/* Hero Headline */}
@@ -117,18 +125,25 @@ export default async function LandingPage() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full sm:w-auto h-11 px-6 text-sm sm:text-base"
-              render={<a href="#demo" />}
+              className="w-full sm:w-auto h-11 px-6 text-sm sm:text-base gap-2"
+              render={
+                <a
+                  href="https://github.com/VANSH3104/Botato"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                />
+              }
             >
-              <span>Watch Interactive Demo</span>
+              <GitHubIcon className="size-4" />
+              <span>Star on GitHub</span>
             </Button>
           </div>
 
           {/* Social Proof / Stats Strip */}
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 pt-4 text-xs font-mono text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Cpu className="size-4 text-primary" />
-              <span>Groq LPU Inference (480+ tok/s)</span>
+              <Zap className="size-4 text-primary" />
+              <span>Real-Time Inference (480+ tok/s)</span>
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="size-4 text-emerald-400" />
@@ -138,10 +153,14 @@ export default async function LandingPage() {
               <Lock className="size-4 text-purple-400" />
               <span>Zero-Leak MCP Privacy</span>
             </span>
+            <span className="flex items-center gap-1.5">
+              <Code2 className="size-4 text-cyan-400" />
+              <span>100% Open Source</span>
+            </span>
           </div>
 
           {/* Interactive Hero Visual Showcase */}
-          <div id="demo" className="pt-8 sm:pt-12 scroll-mt-20">
+          <div id="showcase" className="pt-8 sm:pt-12 scroll-mt-20">
             <LandingHeroDemo />
           </div>
         </div>
@@ -273,54 +292,167 @@ export default async function LandingPage() {
       <section id="mcp" className="py-20 border-t border-border/80 bg-muted/20 scroll-mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Visual Mock Card */}
-            <div className="order-2 lg:order-1 rounded-2xl border border-emerald-500/30 bg-card p-6 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm">
-                <ShieldCheck className="size-5" />
-                <span>Zero-Leak Credential Shield</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                When you connect GitHub, Notion, or internal MCP tools, Botato proxies all tool calls through an isolated server layer.
-              </p>
-              <div className="space-y-2 font-mono text-[11px]">
-                <div className="p-2.5 rounded-lg bg-background border border-border flex items-center justify-between">
-                  <span className="text-foreground">GitHub MCP</span>
-                  <span className="text-emerald-400 font-sans text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                    Active • Scoped
+            {/* Visual Mock Control Window */}
+            <div className="order-2 lg:order-1 rounded-2xl border border-border/90 bg-card/95 shadow-2xl overflow-hidden backdrop-blur-xl">
+              {/* Window Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/80 bg-muted/60">
+                <div className="flex items-center gap-2">
+                  <span className="size-2.5 rounded-full bg-rose-500/80 inline-block" />
+                  <span className="size-2.5 rounded-full bg-amber-500/80 inline-block" />
+                  <span className="size-2.5 rounded-full bg-emerald-500/80 inline-block" />
+                  <span className="text-xs font-mono text-muted-foreground ml-2">
+                    botato-gateway // zero-leak-proxy
                   </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-background border border-border flex items-center justify-between">
-                  <span className="text-foreground">Notion Workspace</span>
-                  <span className="text-emerald-400 font-sans text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                    Active • Scoped
-                  </span>
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>4 Services Connected</span>
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
-                🔒 Strict SSRF Defense: Private subnets (127.0.0.1, 10.x, 192.168.x, 169.254.169.254) are rejected before network requests are dispatched.
+
+              {/* Service Cards Showcase */}
+              <div className="p-4 sm:p-5 space-y-2.5">
+                {/* GitHub MCP Card */}
+                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
+                      <Code2 className="size-4 text-violet-400 shrink-0" />
+                      <span>GitHub MCP</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">VANSH3104/Botato</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      Active • 12 Tools
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span>Auth: ghp_•••••••••••• (Injected via Proxy)</span>
+                    <span className="text-emerald-400 text-[10.5px]">✓ PR reviews, issues, diff checks</span>
+                  </div>
+                </div>
+
+                {/* Linear Workspace */}
+                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
+                      <CheckCircle2 className="size-4 text-indigo-400 shrink-0" />
+                      <span>Linear Workspace</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      Active • 8 Tools
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span>Auth: lin_api_•••••••• (Encrypted)</span>
+                    <span className="text-indigo-400 text-[10.5px]">✓ Sprint triage &amp; backlog tasks</span>
+                  </div>
+                </div>
+
+                {/* Notion Workspace */}
+                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
+                      <FileText className="size-4 text-amber-400 shrink-0" />
+                      <span>Notion Workspace</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      Active • 6 Tools
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span>Auth: secret_•••••••• (Encrypted)</span>
+                    <span className="text-amber-400 text-[10.5px]">✓ Search docs &amp; update specs</span>
+                  </div>
+                </div>
+
+                {/* PostgreSQL Database */}
+                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
+                      <Database className="size-4 text-cyan-400 shrink-0" />
+                      <span>PostgreSQL Database</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                      Active • Read-Only
+                    </span>
+                  </div>
+                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span>postgresql://botato:••••@proxy</span>
+                    <span className="text-cyan-400 text-[10.5px]">✓ Schema inspection &amp; query limits</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Security Banner */}
+              <div className="px-4 py-3 border-t border-border/80 bg-emerald-500/5 text-xs text-emerald-300 flex items-center gap-2">
+                <ShieldCheck className="size-4 shrink-0 text-emerald-400" />
+                <span className="leading-tight">
+                  <strong>Strict SSRF Defense:</strong> Private IP subnets (127.0.0.1, 10.x, 192.168.x) are blocked before network dispatch.
+                </span>
               </div>
             </div>
 
-            <div className="order-1 lg:order-2 space-y-5">
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            {/* Right Column: Copy & Value Proposition */}
+            <div className="order-1 lg:order-2 space-y-6">
+              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                 <Lock className="size-3.5" />
                 <span>Enterprise Privacy Standard</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-                Connect Apps Safely with Model Context Protocol
+              
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-[1.2]">
+                Connect Every Tool Safely with Model Context Protocol
               </h2>
+              
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 Connect any of the thousands of MCP servers in the ecosystem. Your bots can read GitHub issues, update Jira/Linear tasks, query Postgres databases, and draft Notion documents—without ever exposing your credentials to the LLM.
               </p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {["GitHub", "Notion", "Linear", "Slack", "PostgreSQL", "Custom REST"].map((app) => (
-                  <span
-                    key={app}
-                    className="text-xs px-2.5 py-1 rounded-md bg-card border border-border text-foreground font-medium"
-                  >
-                    {app}
+
+              <div className="space-y-3 text-sm text-foreground">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Zero-Token Exposure:</strong> Keys and bearer tokens are proxy-injected server-side; LLM prompts never contain sensitive credentials.
                   </span>
-                ))}
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Dynamic Tool Discovery:</strong> Schemas and capabilities are discovered on the fly via standard JSON-RPC handshakes.
+                  </span>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Granular Bot Scoping:</strong> Assign apps account-wide or scope them strictly to specialized bots (e.g. Developer, Researcher).
+                  </span>
+                </div>
+              </div>
+
+              {/* Supported MCP Services Pills */}
+              <div className="pt-2">
+                <div className="text-xs font-medium text-muted-foreground mb-2">
+                  Popular Pre-Configured Services:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Google Drive",
+                    "Live Web Search",
+                    "Notion",
+                    "Slack",
+                    "Gmail",
+                    "Weather & Forecast",
+                    "GitHub",
+                    "Linear",
+                    "PostgreSQL",
+                    "Figma",
+                  ].map((app) => (
+                    <span
+                      key={app}
+                      className="text-xs px-2.5 py-1 rounded-lg bg-card border border-border/80 text-foreground font-medium hover:border-primary/40 transition-colors"
+                    >
+                      {app}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -338,7 +470,7 @@ export default async function LandingPage() {
               Test Drive Multi-Agent Collaboration
             </h2>
             <p className="text-sm text-muted-foreground">
-              Experience the sub-second speed of Groq LPU inference and autonomous sandbox verification.
+              Experience sub-second real-time streaming inference and autonomous sandbox verification.
             </p>
           </div>
 
@@ -416,7 +548,7 @@ export default async function LandingPage() {
             Spin up your first bot team in seconds. Enjoy dedicated cloud sandboxes, persistent memory, and live browser automation.
           </p>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               render={<Link href={userId ? "/dashboard" : "/sign-up"} />}
               size="lg"
@@ -424,6 +556,21 @@ export default async function LandingPage() {
             >
               <span>{userId ? "Go to Your Dashboard" : "Get Started for Free"}</span>
               <ArrowRight className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 px-8 text-base font-semibold gap-2"
+              render={
+                <a
+                  href="https://github.com/VANSH3104/Botato"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                />
+              }
+            >
+              <GitHubIcon className="size-4" />
+              <span>GitHub Repository</span>
             </Button>
           </div>
         </div>
@@ -439,11 +586,12 @@ export default async function LandingPage() {
 
           <div className="flex items-center gap-6">
             <a
-              href="https://github.com"
+              href="https://github.com/VANSH3104/Botato"
               target="_blank"
               rel="noreferrer noopener"
-              className="hover:text-foreground transition-colors flex items-center gap-1"
+              className="hover:text-foreground transition-colors flex items-center gap-1.5"
             >
+              <GitHubIcon className="size-3.5" />
               <span>GitHub</span>
               <ExternalLink className="size-3" />
             </a>

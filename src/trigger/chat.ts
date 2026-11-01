@@ -509,6 +509,38 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
             }
             return p;
           }
+          if (p.type === "file") {
+            const mediaType = typeof p.mediaType === "string" ? p.mediaType : "";
+            const url = typeof p.url === "string" ? p.url : "";
+            const filename = typeof p.filename === "string" ? p.filename : "file";
+
+            // If it's a text-based file (code, json, markdown, txt) sent as data URL, decode to text
+            if (
+              url.startsWith("data:") &&
+              !mediaType.startsWith("image/") &&
+              (mediaType.startsWith("text/") ||
+                mediaType.includes("json") ||
+                mediaType.includes("javascript") ||
+                mediaType.includes("typescript") ||
+                mediaType.includes("xml"))
+            ) {
+              try {
+                const base64Index = url.indexOf(";base64,");
+                if (base64Index !== -1) {
+                  const b64 = url.slice(base64Index + 8);
+                  const decoded = Buffer.from(b64, "base64").toString("utf-8");
+                  const truncated = decoded.slice(0, 1500);
+                  return {
+                    type: "text",
+                    text: `\n[Attached File: ${filename}]\n\`\`\`\n${truncated}\n\`\`\`\n`,
+                  };
+                }
+              } catch {
+                // fall back to original part
+              }
+            }
+            return part;
+          }
           if (p.type === "tool-result") {
             const raw = p.output ?? p.result;
             if (typeof raw === "string" && raw.length > 800) {
@@ -539,8 +571,25 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       return msg;
     });
 
+    // Check if any message part contains an image file
+    const hasImagePart = compactMessages.some((msg) =>
+      Array.isArray(msg.content) &&
+      msg.content.some((p: unknown) => {
+        const item = p as Record<string, unknown>;
+        return (
+          item?.type === "file" &&
+          ((typeof item?.mediaType === "string" && item.mediaType.startsWith("image/")) ||
+            (typeof item?.url === "string" && item.url.startsWith("data:image/")))
+        );
+      })
+    );
+
+    const activeModel = hasImagePart
+      ? (process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview")
+      : modelName;
+
     return streamText({
-      model: groq(modelName),
+      model: groq(activeModel),
       instructions,
       messages: compactMessages as typeof messages,
       tools: activeTools,
