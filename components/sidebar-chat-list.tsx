@@ -8,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
@@ -20,6 +21,7 @@ export interface SidebarChatListProps {
 
 export function SidebarChatList({ bots }: SidebarChatListProps) {
   const pathname = usePathname()
+  const { setOpenMobile, isMobile } = useSidebar()
 
   const [liveUpdates, setLiveUpdates] = React.useState<
     Record<string, { lastChat?: string; lastChatAt?: string }>
@@ -108,6 +110,11 @@ export function SidebarChatList({ bots }: SidebarChatListProps) {
               isActive={isActive}
               aria-current={isActive ? "page" : undefined}
               render={<Link href={`/chats/${bot.id}`} />}
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false)
+                }
+              }}
               className="h-auto py-2 px-2 gap-2.5 items-center group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:mx-auto"
               tooltip={bot.name}
             >

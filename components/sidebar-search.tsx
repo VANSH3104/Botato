@@ -17,6 +17,7 @@ import {
 import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { cn, formatChatDate } from "@/lib/utils"
+import { useSidebar } from "@/components/ui/sidebar"
 import type { BotWithLastChat } from "@/queries/bots"
 
 export interface SidebarSearchProps {
@@ -26,6 +27,7 @@ export interface SidebarSearchProps {
 
 export function SidebarSearch({ bots = [], className }: SidebarSearchProps) {
   const router = useRouter()
+  const { setOpenMobile, isMobile } = useSidebar()
   const [open, setOpen] = React.useState(false)
 
   React.useEffect(() => {
@@ -80,6 +82,9 @@ export function SidebarSearch({ bots = [], className }: SidebarSearchProps) {
                 value={`${bot.name} ${bot.lastChat ?? ""}`}
                 onSelect={() => {
                   setOpen(false)
+                  if (isMobile) {
+                    setOpenMobile(false)
+                  }
                   router.push(`/chats/${bot.id}`)
                 }}
                 className="flex items-center gap-2.5 py-2 cursor-pointer"
