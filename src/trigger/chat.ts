@@ -1,12 +1,13 @@
 import { chat, defaultStorage } from "@trigger.dev/sdk/ai";
 import { groq } from "@ai-sdk/groq";
-import { isStepCount, tool, generateText } from "ai";
+import { isStepCount, tool, generateText, type ToolSet } from "ai";
 import { z } from "zod";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { bots, groupChats, groupChatMembers } from "@/lib/db/schema";
 import { sandboxTools } from "@/lib/sandbox/tools";
 import { ensureBotSandbox, readBotMemory } from "@/lib/sandbox/memory";
+import { getActiveMcpTools } from "@/lib/mcp/resolver";
 
 export const chatAgent = chat.agent({
   id: "chat-agent",
@@ -26,6 +27,8 @@ export const chatAgent = chat.agent({
       sandboxId: string | null;
     }> = [];
 
+    let chatUserId: string | null = null;
+
     // Query group chat or individual bot details
     if (chatId) {
       try {
@@ -36,6 +39,7 @@ export const chatAgent = chat.agent({
           .limit(1);
 
         if (group) {
+          chatUserId = group.userId;
           isGroup = true;
           groupName = group.name;
           const memberRows = await db
@@ -144,6 +148,7 @@ export const chatAgent = chat.agent({
 
         if (row) {
           activeBot = row;
+          chatUserId = row.userId;
           if (row.userId) {
             userOtherBots = await db
               .select({
@@ -332,9 +337,19 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
       },
     });
 
-    const activeTools = isGroup
-      ? { ...sandboxTools, consultBot: consultBotTool }
-      : sandboxTools;
+    let mcpTools: ToolSet = {};
+    if (chatUserId) {
+      mcpTools = await getActiveMcpTools({
+        userId: chatUserId,
+        botId: activeBot?.id,
+      });
+    }
+
+    const activeTools = {
+      ...sandboxTools,
+      ...(isGroup ? { consultBot: consultBotTool } : {}),
+      ...mcpTools,
+    };
 
     const instructionsList: string[] = [];
 
@@ -450,6 +465,13 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
 - ONLY use bullet points or numbered lists when strictly needed (e.g., chronological steps, technical checklists, or itemized options).
 - Avoid generic intro templates like "Here are a few key points:" or "Totally here for this." Speak naturally and authentically in your persona.`
     );
+
+    if (Object.keys(mcpTools).length > 0) {
+      instructionsList.push(
+        `CONNECTED APPS & MCP TOOLS:`,
+        `You have access to active external MCP tools (${Object.keys(mcpTools).join(", ")}). When the user asks you to interact with external services, tools, or apps, call the corresponding MCP tool.`
+      );
+    }
 
     const instructions = instructionsList.join("\n\n");
 
