@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { ShuffleIcon, Trash2Icon } from "lucide-react"
 import { nanoid } from "nanoid"
 import { useRouter, usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
 
 import {
   Dialog,
@@ -270,12 +269,7 @@ export function BotDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerNode && <DialogTrigger render={triggerNode} />}
-        <DialogContent
-          className={cn(
-            "w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto transition-all duration-200",
-            activeTab === "mcp" ? "sm:max-w-3xl md:max-w-4xl" : "max-w-[460px] sm:max-w-[460px]"
-          )}
-        >
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[480px] sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit bot" : "New bot"}</DialogTitle>
             <DialogDescription>

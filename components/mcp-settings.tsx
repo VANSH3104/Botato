@@ -11,19 +11,19 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
-  Search,
   FileText,
   Database,
   Code2,
-  ArrowRight,
   Zap,
   Check,
-  X,
   Copy,
   CreditCard,
   Bug,
   Cloud,
+  Search,
+  ChevronDown,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -39,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   listMcpServers,
   createMcpServer,
@@ -58,9 +59,11 @@ interface McpServerItem {
   maskedHeaders?: Record<string, string>;
 }
 
+type McpCategory = "productivity" | "search" | "developer";
+
 export interface McpTemplate {
   name: string;
-  category: "productivity" | "search" | "developer";
+  category: McpCategory;
   categoryLabel: string;
   url: string;
   headerKey?: string;
@@ -78,11 +81,11 @@ export const MCP_TEMPLATES: McpTemplate[] = [
   {
     name: "Neon Postgres",
     category: "developer",
-    categoryLabel: "Dev Tools",
+    categoryLabel: "Developer tools",
     url: "https://mcp.neon.tech/mcp",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer neon_...",
-    keyGuide: "API Key from Neon Console (console.neon.tech)",
+    keyGuide: "Get an API key from the Neon Console (console.neon.tech).",
     desc: "Inspect Postgres tables, run queries, and manage database branches.",
     icon: Database,
     accentBg: "bg-cyan-500/10",
@@ -92,12 +95,12 @@ export const MCP_TEMPLATES: McpTemplate[] = [
   {
     name: "Supabase Database",
     category: "developer",
-    categoryLabel: "Dev Tools",
+    categoryLabel: "Developer tools",
     url: "https://mcp.supabase.com/mcp",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer sbp_...",
-    keyGuide: "Personal Access Token from supabase.com/dashboard/account/tokens",
-    desc: "Query Postgres database, inspect schemas, and view storage buckets.",
+    keyGuide: "Create a Personal Access Token from your Supabase account settings.",
+    desc: "Query Postgres, inspect schemas, and work with storage resources.",
     icon: Database,
     accentBg: "bg-emerald-500/10",
     accentText: "text-emerald-500 dark:text-emerald-400",
@@ -106,12 +109,12 @@ export const MCP_TEMPLATES: McpTemplate[] = [
   {
     name: "Stripe Billing & Payments",
     category: "developer",
-    categoryLabel: "Dev Tools",
+    categoryLabel: "Developer tools",
     url: "https://mcp.stripe.com",
     headerKey: "Authorization",
-    headerPlaceholder: "Bearer rk_live_...",
-    keyGuide: "Restricted or Secret key from dashboard.stripe.com/apikeys",
-    desc: "Inspect customers, retrieve invoices, track subscriptions, and check balances.",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Use an appropriate restricted or secret key from your Stripe dashboard.",
+    desc: "Inspect customers, retrieve invoices, and review subscription information.",
     icon: CreditCard,
     accentBg: "bg-indigo-500/10",
     accentText: "text-indigo-500 dark:text-indigo-400",
@@ -120,16 +123,58 @@ export const MCP_TEMPLATES: McpTemplate[] = [
   {
     name: "Sentry Error Tracking",
     category: "developer",
-    categoryLabel: "Dev Tools",
+    categoryLabel: "Developer tools",
     url: "https://mcp.sentry.io",
     headerKey: "Authorization",
-    headerPlaceholder: "Bearer sntrys_...",
-    keyGuide: "User Auth Token from sentry.io/settings/account/api/auth-tokens",
-    desc: "Query production issues, fetch crash stack traces, and review releases.",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Create a user auth token in Sentry account settings.",
+    desc: "Query production issues, inspect stack traces, and review releases.",
     icon: Bug,
     accentBg: "bg-rose-500/10",
     accentText: "text-rose-500 dark:text-rose-400",
     accentBorder: "border-rose-500/30",
+  },
+  {
+    name: "Linear Tasks",
+    category: "developer",
+    categoryLabel: "Developer tools",
+    url: "https://mcp.linear.app/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer lin_api_...",
+    keyGuide: "Create a Personal API key in Linear Settings → Account → API.",
+    desc: "Track issues, update projects, and create backlog tasks.",
+    icon: CheckCircle2,
+    accentBg: "bg-indigo-500/10",
+    accentText: "text-indigo-500 dark:text-indigo-400",
+    accentBorder: "border-indigo-500/30",
+  },
+  {
+    name: "GitHub Copilot MCP",
+    category: "developer",
+    categoryLabel: "Developer tools",
+    url: "https://api.githubcopilot.com/mcp/",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Use a GitHub token with only the permissions your integration requires.",
+    desc: "Work with repositories, pull requests, diffs, and issues.",
+    icon: Code2,
+    accentBg: "bg-violet-500/10",
+    accentText: "text-violet-500 dark:text-violet-400",
+    accentBorder: "border-violet-500/30",
+  },
+  {
+    name: "Cloudflare Infrastructure",
+    category: "developer",
+    categoryLabel: "Developer tools",
+    url: "https://mcp.cloudflare.com/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Create an API token with only the Cloudflare permissions you need.",
+    desc: "Manage Workers, KV namespaces, DNS records, and R2 resources.",
+    icon: Cloud,
+    accentBg: "bg-orange-500/10",
+    accentText: "text-orange-500 dark:text-orange-400",
+    accentBorder: "border-orange-500/30",
   },
   {
     name: "Notion Workspace",
@@ -137,70 +182,34 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     categoryLabel: "Productivity",
     url: "https://mcp.notion.com/mcp",
     headerKey: "Authorization",
-    headerPlaceholder: "Bearer secret_...",
-    keyGuide: "Internal Integration Secret from notion.so/my-integrations",
-    desc: "Search pages, read workspace documents in markdown, and update databases.",
+    headerPlaceholder: "Bearer ntn_...",
+    keyGuide: "Create an integration in Notion and grant it access to the pages you need.",
+    desc: "Search pages, read workspace documents, and work with databases.",
     icon: FileText,
     accentBg: "bg-stone-500/10",
     accentText: "text-stone-700 dark:text-stone-300",
     accentBorder: "border-stone-500/30",
   },
   {
-    name: "Linear Tasks",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://mcp.linear.app/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer lin_api_...",
-    keyGuide: "Personal API key from Linear Settings > Account > API",
-    desc: "Track issues, update sprints, and create backlog tasks.",
-    icon: CheckCircle2,
-    accentBg: "bg-indigo-500/10",
-    accentText: "text-indigo-500 dark:text-indigo-400",
-    accentBorder: "border-indigo-500/30",
-  },
-  {
-    name: "Brave Live Search",
+    name: "Brave Search",
     category: "search",
-    categoryLabel: "Search & Web",
+    categoryLabel: "Search & web",
     url: "https://api.search.brave.com/res/v1/mcp",
     headerKey: "X-Subscription-Token",
     headerPlaceholder: "BSA...",
-    keyGuide: "Get a free API key at brave.com/search/api",
-    desc: "Search the live web, current news, breaking updates, and web articles.",
+    keyGuide: "Get a Brave Search API key from brave.com/search/api.",
+    desc: "Search the web for current pages, articles, and information.",
     icon: Search,
     accentBg: "bg-amber-500/10",
     accentText: "text-amber-500 dark:text-amber-400",
     accentBorder: "border-amber-500/30",
   },
-  {
-    name: "Cloudflare Infrastructure",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://mcp.cloudflare.com/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "API Token with Workers and KV permissions from dash.cloudflare.com",
-    desc: "Manage Cloudflare Workers, KV namespaces, DNS records, and R2 buckets.",
-    icon: Cloud,
-    accentBg: "bg-orange-500/10",
-    accentText: "text-orange-500 dark:text-orange-400",
-    accentBorder: "border-orange-500/30",
-  },
-  {
-    name: "GitHub Copilot MCP",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://api.githubcopilot.com/mcp/",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ghp_...",
-    keyGuide: "Personal access token with repo scope from github.com/settings/tokens",
-    desc: "Inspect repositories, search pull requests, check diffs, and review issues.",
-    icon: Code2,
-    accentBg: "bg-violet-500/10",
-    accentText: "text-violet-500 dark:text-violet-400",
-    accentBorder: "border-violet-500/30",
-  },
+];
+
+const CATEGORY_GROUPS: { id: McpCategory; label: string }[] = [
+  { id: "developer", label: "Developer tools" },
+  { id: "productivity", label: "Productivity" },
+  { id: "search", label: "Search & web" },
 ];
 
 export function McpSettings({
@@ -213,114 +222,129 @@ export function McpSettings({
   const [servers, setServers] = React.useState<McpServerItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isAdding, setIsAdding] = React.useState(false);
-  const [activeCategory, setActiveCategory] = React.useState<string>("all");
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
-  // New server form
+  // Template selection and connection form state.
+  const [selectedTemplateName, setSelectedTemplateName] = React.useState("");
+  const [activeTemplate, setActiveTemplate] = React.useState<McpTemplate | null>(null);
   const [name, setName] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [authHeader, setAuthHeader] = React.useState("");
-  const [activeGuide, setActiveGuide] = React.useState<string | null>(null);
-  const [activeTemplate, setActiveTemplate] = React.useState<McpTemplate | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  // Connected server action state.
   const [testingId, setTestingId] = React.useState<string | null>(null);
-  const [testResults, setTestResults] = React.useState<Record<string, { success: boolean; message: string }>>({});
+  const [testResults, setTestResults] = React.useState<
+    Record<string, { success: boolean; message: string }>
+  >({});
   const [copiedUrlId, setCopiedUrlId] = React.useState<string | null>(null);
+
+  const selectedTemplate = React.useMemo(
+    () => MCP_TEMPLATES.find((template) => template.name === selectedTemplateName) ?? null,
+    [selectedTemplateName]
+  );
 
   const loadServers = React.useCallback(async () => {
     try {
-      const res = await listMcpServers(botId);
-      if (res.success && res.servers) {
-        setServers(res.servers);
+      const result = await listMcpServers(botId);
+      if (result.success && result.servers) {
+        setServers(result.servers);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Failed to load MCP servers:", error);
+      toast.add({
+        type: "error",
+        title: "Could not load MCP servers",
+        description: "Please refresh and try again.",
+      });
     } finally {
       setIsLoading(false);
     }
   }, [botId]);
 
   React.useEffect(() => {
-    let ignore = false;
-    async function init() {
-      try {
-        const res = await listMcpServers(botId);
-        if (!ignore && res.success && res.servers) {
-          setServers(res.servers);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      }
-    }
-    init();
-    return () => {
-      ignore = true;
-    };
-  }, [botId]);
+    void loadServers();
+  }, [loadServers]);
 
-  const handleApplyTemplate = (tpl: McpTemplate) => {
-    setActiveTemplate(tpl);
-    setName(tpl.name);
-    setUrl(tpl.url);
-    setActiveGuide(tpl.keyGuide ?? (tpl.isFree ? "Free public MCP server: No API key required." : null));
+  const resetForm = () => {
+    setName("");
+    setUrl("");
+    setAuthHeader("");
+    setActiveTemplate(null);
+    setSelectedTemplateName("");
+    setIsAdding(false);
+  };
+
+  const handleChooseTemplate = (template: McpTemplate) => {
+    setSelectedTemplateName(template.name);
+    setActiveTemplate(template);
+    setName(template.name);
+    setUrl(template.url);
     setAuthHeader("");
     setIsAdding(true);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !url.trim()) return;
+  const handleStartCustomServer = () => {
+    setSelectedTemplateName("");
+    setActiveTemplate(null);
+    setName("");
+    setUrl("");
+    setAuthHeader("");
+    setIsAdding(true);
+  };
 
-    setIsSubmitting(true);
+  const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedName = name.trim();
+    const trimmedUrl = url.trim();
+
+    if (!trimmedName || !trimmedUrl) return;
+
     try {
+      setIsSubmitting(true);
+
       const headers: Record<string, string> = {};
-      if (authHeader.trim()) {
-        const headerKey = activeTemplate?.headerKey || "Authorization";
-        if (headerKey === "Authorization") {
-          headers["Authorization"] = authHeader.trim().startsWith("Bearer ")
-            ? authHeader.trim()
-            : `Bearer ${authHeader.trim()}`;
+      const token = authHeader.trim();
+
+      if (token) {
+        const headerKey = activeTemplate?.headerKey ?? "Authorization";
+
+        if (headerKey.toLowerCase() === "authorization") {
+          headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
         } else {
-          headers[headerKey] = authHeader.trim();
+          headers[headerKey] = token;
         }
       }
 
-      const res = await createMcpServer({
-        name: name.trim(),
-        url: url.trim(),
+      const result = await createMcpServer({
+        name: trimmedName,
+        url: trimmedUrl,
         botId: botId || null,
         headers: Object.keys(headers).length > 0 ? headers : undefined,
         isEnabled: true,
       });
 
-      if (res.success) {
-        toast.add({
-          title: "App Connected",
-          description: `"${name}" connected with zero-leak privacy guards.`,
-        });
-        setName("");
-        setUrl("");
-        setAuthHeader("");
-        setActiveGuide(null);
-        setActiveTemplate(null);
-        setIsAdding(false);
-        await loadServers();
-      } else {
+      if (!result.success) {
         toast.add({
           type: "error",
-          title: "Connection Failed",
-          description: res.error || "Could not connect to MCP server.",
+          title: "Connection failed",
+          description: result.error || "Could not connect to the MCP server.",
         });
+        return;
       }
+
+      toast.add({
+        title: "MCP server added",
+        description: `${trimmedName} was added successfully.`,
+      });
+
+      resetForm();
+      await loadServers();
     } catch (error) {
       toast.add({
         type: "error",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Unexpected error",
+        title: "Something went wrong",
+        description: error instanceof Error ? error.message : "Unexpected error.",
       });
     } finally {
       setIsSubmitting(false);
@@ -329,421 +353,333 @@ export function McpSettings({
 
   const handleTest = async (id: string) => {
     setTestingId(id);
+
     try {
-      const res = await testMcpServer(id);
-      if (res.success) {
-        setTestResults((prev) => ({
-          ...prev,
-          [id]: {
-            success: true,
-            message: `Verified: ${res.toolCount ?? 0} tool${(res.toolCount ?? 0) === 1 ? "" : "s"} ready.`,
-          },
-        }));
-      } else {
-        setTestResults((prev) => ({
-          ...prev,
-          [id]: {
-            success: false,
-            message: res.error || "Connection test failed",
-          },
-        }));
-      }
+      const result = await testMcpServer(id);
+
+      setTestResults((previous) => ({
+        ...previous,
+        [id]: result.success
+          ? {
+              success: true,
+              message: `Connected — ${result.toolCount ?? 0} tool${result.toolCount === 1 ? "" : "s"} available.`,
+            }
+          : {
+              success: false,
+              message: result.error || "The connection test failed.",
+            },
+      }));
+    } catch (error) {
+      setTestResults((previous) => ({
+        ...previous,
+        [id]: {
+          success: false,
+          message: error instanceof Error ? error.message : "The connection test failed.",
+        },
+      }));
     } finally {
       setTestingId(null);
     }
   };
 
-  const handleToggle = async (id: string, current: boolean) => {
+  const handleToggle = async (server: McpServerItem) => {
+    const nextEnabled = !server.isEnabled;
+
     try {
-      await toggleMcpServer(id, !current);
-      setServers((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, isEnabled: !current } : s))
+      await toggleMcpServer(server.id, nextEnabled);
+      setServers((previous) =>
+        previous.map((item) =>
+          item.id === server.id ? { ...item, isEnabled: nextEnabled } : item
+        )
       );
     } catch {
-      toast.add({ type: "error", title: "Failed to update state" });
+      toast.add({
+        type: "error",
+        title: "Could not update server",
+        description: "Please try again.",
+      });
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteMcpServer(id);
-      setServers((prev) => prev.filter((s) => s.id !== id));
-      toast.add({ title: "MCP Server removed" });
+      setServers((previous) => previous.filter((server) => server.id !== id));
+      setTestResults((previous) => {
+        const next = { ...previous };
+        delete next[id];
+        return next;
+      });
+      toast.add({ title: "MCP server removed" });
     } catch {
-      toast.add({ type: "error", title: "Failed to delete server" });
+      toast.add({
+        type: "error",
+        title: "Could not remove server",
+        description: "Please try again.",
+      });
     }
   };
 
-  const handleCopyUrl = (id: string, serverUrl: string) => {
-    navigator.clipboard.writeText(serverUrl);
-    setCopiedUrlId(id);
-    setTimeout(() => setCopiedUrlId(null), 2000);
+  const handleCopyUrl = async (id: string, serverUrl: string) => {
+    try {
+      await navigator.clipboard.writeText(serverUrl);
+      setCopiedUrlId(id);
+      window.setTimeout(() => setCopiedUrlId(null), 1800);
+    } catch {
+      toast.add({
+        type: "error",
+        title: "Copy failed",
+        description: "Your browser did not allow copying this URL.",
+      });
+    }
   };
 
-  const filteredTemplates = React.useMemo(() => {
-    return MCP_TEMPLATES.filter((tpl) => {
-      const matchesCategory =
-        activeCategory === "all" || tpl.category === activeCategory;
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        tpl.name.toLowerCase().includes(q) ||
-        tpl.desc.toLowerCase().includes(q) ||
-        tpl.categoryLabel.toLowerCase().includes(q);
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
+  const TemplateIcon = selectedTemplate?.icon;
 
   return (
-    <div className="space-y-4">
-      {/* Privacy & Guardrail Callout */}
-      <div className="flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3 text-emerald-200 shadow-2xs">
-        <div className="size-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400 mt-0.5">
-          <ShieldCheck className="size-4.5" />
+    <div className="space-y-5">
+      {/* Security information */}
+      <div className="flex items-start gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3">
+        <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-500">
+          <ShieldCheck className="size-5" />
         </div>
-        <div className="space-y-1 min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-emerald-300">
-              Zero-Leak Credential Shield Active
-            </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-medium">
-              SSRF Protected
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-foreground">Credential protection</p>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+              Server-side authentication
             </span>
           </div>
-          <p className="text-[11.5px] leading-relaxed text-emerald-200/80">
-            Authorization tokens are stored securely and injected by Botato&apos;s server-side proxy. {botName || "Your bot"} executes tools dynamically without ever seeing or logging raw API keys.
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {botName || "Your bot"} connects to external MCP servers through your server-side
+            integration. Keep API tokens private and grant only the permissions required.
           </p>
         </div>
       </div>
 
-      {/* Preset App Directory / Showcase */}
+      {/* MCP directory: one compact dropdown instead of a large card grid */}
       {!isAdding && (
-        <div className="space-y-3 rounded-2xl border border-border bg-card/70 p-4 shadow-sm backdrop-blur-xs">
-          {/* Showcase Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold text-foreground text-sm tracking-tight">
-                Model Context Protocol Showcase
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Connect external apps and live services so {botName || "your bot"} can read, search, and automate actions.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Select
-                onValueChange={(val) => {
-                  if (typeof val === "string") {
-                    const tpl = MCP_TEMPLATES.find((t) => t.name === val);
-                    if (tpl) handleApplyTemplate(tpl);
-                  }
-                }}
-              >
-                <SelectTrigger className="h-8 w-[160px] text-xs font-medium border-border/80 bg-background/80">
-                  <SelectValue placeholder="Quick Connect..." />
-                </SelectTrigger>
-                <SelectContent align="end" alignItemWithTrigger={false} className="w-[230px]">
-                  <SelectGroup>
-                    <SelectLabel>Dev Tools</SelectLabel>
-                    {MCP_TEMPLATES.filter((t) => t.category === "developer").map((tpl) => (
-                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
-                        {tpl.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectSeparator />
-                  <SelectGroup>
-                    <SelectLabel>Productivity</SelectLabel>
-                    {MCP_TEMPLATES.filter((t) => t.category === "productivity").map((tpl) => (
-                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
-                        {tpl.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectSeparator />
-                  <SelectGroup>
-                    <SelectLabel>Search &amp; Web</SelectLabel>
-                    {MCP_TEMPLATES.filter((t) => t.category === "search").map((tpl) => (
-                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
-                        {tpl.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">MCP server directory</h3>
+                <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-muted-foreground">
+                  Choose an integration from the dropdown. You can review its details before
+                  entering credentials and connecting it.
+                </p>
+              </div>
 
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 text-xs font-medium shrink-0 border-border/80 hover:border-primary/50"
-                onClick={() => {
-                  setName("");
-                  setUrl("");
-                  setAuthHeader("");
-                  setActiveGuide(null);
-                  setActiveTemplate(null);
-                  setIsAdding(true);
-                }}
+                onClick={handleStartCustomServer}
+                className="h-9 shrink-0 gap-2 cursor-pointer"
               >
-                <Plus className="size-3.5" />
-                <span>Custom Server</span>
+                <Plus className="size-4" />
+                Add custom server
               </Button>
             </div>
-          </div>
 
-          {/* Search & Category Filter Toolbar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 border-t border-border/60">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search tools, databases, apps..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 pl-8 pr-7 text-xs rounded-lg border-border/70 bg-background/80 placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
-                  title="Clear search"
+            <div className="space-y-2">
+              <Field>
+                <FieldLabel htmlFor="mcp-template">Choose an MCP integration</FieldLabel>
+                <Select
+                  value={selectedTemplateName}
+                  onValueChange={(value) => {
+                    if (typeof value === "string") {
+                      setSelectedTemplateName(value);
+                    }
+                  }}
                 >
-                  <X className="size-3" />
-                </button>
+                  <SelectTrigger id="mcp-template" className="h-11 w-full bg-background">
+                    <SelectValue placeholder="Select a server to connect..." />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    {CATEGORY_GROUPS.map((category, index) => (
+                      <React.Fragment key={category.id}>
+                        {index > 0 && <SelectSeparator />}
+                        <SelectGroup>
+                          <SelectLabel>{category.label}</SelectLabel>
+                          {MCP_TEMPLATES.filter(
+                            (template) => template.category === category.id
+                          ).map((template) => (
+                            <SelectItem key={template.name} value={template.name}>
+                              <span className="flex items-center gap-2">
+                                <template.icon className="size-4 text-muted-foreground" />
+                                {template.name}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </React.Fragment>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {selectedTemplate ? (
+                <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/70 p-3 sm:flex-row sm:items-center">
+                  <div
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${selectedTemplate.accentBg} ${selectedTemplate.accentBorder} ${selectedTemplate.accentText}`}
+                  >
+                    {TemplateIcon && <TemplateIcon className="size-5" />}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">
+                        {selectedTemplate.name}
+                      </p>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {selectedTemplate.categoryLabel}
+                      </span>
+                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                        {selectedTemplate.headerKey ? "Authentication required" : "No token configured"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {selectedTemplate.desc}
+                    </p>
+                    <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground/80">
+                      {selectedTemplate.url}
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="shrink-0 gap-2 cursor-pointer"
+                    onClick={() => handleChooseTemplate(selectedTemplate)}
+                  >
+                    <Zap className="size-3.5" />
+                    Configure
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-background/50 p-3 text-xs text-muted-foreground">
+                  <ChevronDown className="size-4 shrink-0" />
+                  Select an integration to see its description and configuration options.
+                </div>
               )}
             </div>
-
-            {/* Category Filter Dropdown */}
-            <Select
-              value={activeCategory}
-              onValueChange={(val) => {
-                if (typeof val === "string") setActiveCategory(val);
-              }}
-            >
-              <SelectTrigger className="h-8 w-full sm:w-[150px] shrink-0 text-xs bg-background/80 border-border/70">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent align="end" alignItemWithTrigger={false} className="text-xs">
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="developer">Dev Tools</SelectItem>
-                <SelectItem value="productivity">Productivity</SelectItem>
-                <SelectItem value="search">Search &amp; Web</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-
-          {/* Showcase Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 max-h-[300px] overflow-y-auto pr-1">
-            {filteredTemplates.length === 0 ? (
-              <div className="col-span-full py-8 text-center text-muted-foreground space-y-1">
-                <p className="text-xs">No MCP services found matching &ldquo;{searchQuery}&rdquo;</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setActiveCategory("all");
-                  }}
-                  className="text-xs text-primary hover:underline font-medium"
-                >
-                  Reset filters
-                </button>
-              </div>
-            ) : (
-              filteredTemplates.map((tpl) => {
-                const Icon = tpl.icon;
-                return (
-                  <div
-                    key={tpl.name}
-                    onClick={() => handleApplyTemplate(tpl)}
-                    className="group relative flex items-start gap-3 p-3 rounded-xl border border-border/70 bg-background/80 hover:bg-muted/40 hover:border-primary/50 transition-all duration-200 cursor-pointer text-left shadow-2xs hover:shadow-md"
-                  >
-                    {/* Brand / App Icon */}
-                    <div
-                      className={`size-10 rounded-xl ${tpl.accentBg} ${tpl.accentBorder} border flex items-center justify-center ${tpl.accentText} shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-2xs`}
-                    >
-                      <Icon className="size-5" />
-                    </div>
-
-                    {/* App Content */}
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors truncate">
-                            {tpl.name}
-                          </span>
-                        </div>
-                        {tpl.isFree ? (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 font-mono font-medium border border-emerald-500/25 shrink-0">
-                            Free
-                          </span>
-                        ) : (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-mono shrink-0">
-                            API Key
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                        {tpl.desc}
-                      </p>
-
-                      <div className="pt-1 flex items-center justify-between text-[10.5px]">
-                        <span className="text-muted-foreground/75 font-mono">
-                          {tpl.categoryLabel}
-                        </span>
-                        <span className="inline-flex items-center gap-1 font-medium text-primary group-hover:translate-x-0.5 transition-transform">
-                          <span>Connect</span>
-                          <ArrowRight className="size-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
+        </section>
       )}
 
-      {/* Add New Server / Template Configuration Form */}
+      {/* Configuration form */}
       {isAdding && (
         <form
           onSubmit={handleCreate}
-          className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4 shadow-xl"
+          className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <div className="flex items-center gap-2.5">
-              {activeTemplate ? (
-                <div
-                  className={`size-9 rounded-xl ${activeTemplate.accentBg} ${activeTemplate.accentBorder} border flex items-center justify-center ${activeTemplate.accentText}`}
-                >
-                  <activeTemplate.icon className="size-4.5" />
-                </div>
-              ) : (
-                <div className="size-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <Server className="size-4.5" />
-                </div>
-              )}
-              <div>
-                <h4 className="font-semibold text-foreground text-sm">
-                  {activeTemplate ? `Connect ${activeTemplate.name}` : "Connect Custom MCP Server"}
-                </h4>
+          <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                {activeTemplate ? (
+                  <activeTemplate.icon className="size-5" />
+                ) : (
+                  <Server className="size-5" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <h3 className="truncate text-sm font-semibold text-foreground">
+                  {activeTemplate ? `Connect ${activeTemplate.name}` : "Add custom MCP server"}
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Credentials are proxy-routed and shielded with zero token leakage.
+                  Enter the endpoint and authentication details.
                 </p>
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                setIsAdding(false);
-                setActiveTemplate(null);
-              }}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={resetForm} className="cursor-pointer">
               Cancel
             </Button>
           </div>
 
-          {/* Quick Guide Banner for Selected Template */}
-          {activeGuide && (
-            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs text-primary">
-              <HelpCircle className="size-4 shrink-0 mt-0.5" />
-              <div className="space-y-0.5 leading-relaxed">
-                <span className="font-semibold">Setup Guidance:</span>{" "}
-                <span>{activeGuide}</span>
-              </div>
+          {activeTemplate?.keyGuide && (
+            <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+              <HelpCircle className="mt-0.5 size-4 shrink-0 text-primary" />
+              <p>
+                <span className="font-semibold text-foreground">Setup guidance: </span>
+                {activeTemplate.keyGuide}
+              </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <Field className="sm:col-span-1">
-              <FieldLabel htmlFor="mcp-name">App / Display Name</FieldLabel>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="mcp-name">Display name</FieldLabel>
               <Input
                 id="mcp-name"
-                placeholder="e.g. Google Drive MCP"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="e.g. Google Drive"
                 required
-                className="h-9 text-xs"
+                className="h-10"
               />
             </Field>
 
-            <Field className="sm:col-span-1">
-              <FieldLabel htmlFor="mcp-url">MCP Server Endpoint URL</FieldLabel>
+            <Field>
+              <FieldLabel htmlFor="mcp-url">MCP server endpoint</FieldLabel>
               <Input
                 id="mcp-url"
                 type="url"
-                placeholder="https://..."
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://example.com/mcp"
                 required
-                className="h-9 text-xs font-mono"
+                className="h-10 font-mono text-xs"
               />
             </Field>
           </div>
 
           <Field>
             <FieldLabel htmlFor="mcp-auth">
-              {activeTemplate?.headerKey ? (
-                <span>
-                  API Key or Access Token ({activeTemplate.headerKey})
-                </span>
-              ) : (
-                <span>API Key or Bearer Token (Optional)</span>
-              )}
+              {activeTemplate?.headerKey
+                ? `API key / access token (${activeTemplate.headerKey})`
+                : "API key / bearer token (optional)"}
             </FieldLabel>
             <Input
               id="mcp-auth"
               type="password"
-              placeholder={activeTemplate?.headerPlaceholder || "Enter API key or access token..."}
+              autoComplete="new-password"
               value={authHeader}
-              onChange={(e) => setAuthHeader(e.target.value)}
-              className="h-9 text-xs font-mono"
+              onChange={(event) => setAuthHeader(event.target.value)}
+              placeholder={activeTemplate?.headerPlaceholder ?? "Enter your token"}
+              className="h-10 font-mono text-xs"
             />
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-              <Lock className="size-3 text-emerald-400 shrink-0" />
-              <span>
-                Encrypted &amp; Masked: Tokens are never exposed in prompt transcripts, logs, or client-side bundles.
-              </span>
-            </div>
+            <p className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+              <Lock className="size-3 shrink-0 text-emerald-500" />
+              Tokens should be stored securely on the server and never exposed to the model.
+            </p>
           </Field>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+          <div className="flex flex-col-reverse gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsAdding(false);
-                setActiveTemplate(null);
-              }}
+              onClick={resetForm}
               disabled={isSubmitting}
+              className="cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              size="sm"
-              disabled={isSubmitting || !name || !url}
-              className="font-medium gap-1.5"
+              disabled={isSubmitting || !name.trim() || !url.trim()}
+              className="gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
-                  <Spinner className="size-3.5" />
-                  <span>Connecting...</span>
+                  <Spinner className="size-4" />
+                  Connecting...
                 </>
               ) : (
                 <>
-                  <Zap className="size-3.5" />
-                  <span>Save &amp; Connect App</span>
+                  <Zap className="size-4" />
+                  Save and connect
                 </>
               )}
             </Button>
@@ -751,32 +687,33 @@ export function McpSettings({
         </form>
       )}
 
-      {/* List of Active Connected Servers */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-xs text-foreground">
-              Active Connected Apps
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-muted font-mono font-medium text-muted-foreground">
-              {servers.length}
-            </span>
+      {/* Connected servers */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Connected MCP servers</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Manage the integrations available to {botName || "this bot"}.
+            </p>
           </div>
+          <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium tabular-nums text-muted-foreground">
+            {servers.length}
+          </span>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center p-8 text-muted-foreground gap-2 rounded-xl border border-border bg-card/40">
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card/50 p-8 text-xs text-muted-foreground">
             <Spinner className="size-4" />
-            <span className="text-xs">Loading connected tools...</span>
+            Loading connected servers...
           </div>
-        ) : servers.length === 0 && !isAdding ? (
-          <div className="rounded-xl border border-dashed border-border/80 bg-card/30 p-6 text-center text-muted-foreground space-y-2">
-            <div className="size-10 rounded-full bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground">
+        ) : servers.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border bg-card/30 px-5 py-8 text-center">
+            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <Server className="size-5" />
             </div>
-            <div className="font-medium text-foreground text-xs">No external apps connected yet</div>
-            <p className="text-[11.5px] text-muted-foreground max-w-sm mx-auto leading-relaxed">
-              Choose an app from the showcase directory above to give {botName || "this bot"} live search, drive access, or team automation.
+            <p className="mt-3 text-sm font-medium text-foreground">No MCP servers connected</p>
+            <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
+              Choose an integration from the directory above or add your own MCP server.
             </p>
           </div>
         ) : (
@@ -786,117 +723,112 @@ export function McpSettings({
               const isTesting = testingId === server.id;
 
               return (
-                <div
+                <article
                   key={server.id}
-                  className="rounded-xl border border-border/80 bg-card/70 p-3.5 space-y-2.5 shadow-2xs hover:border-border transition-colors"
+                  className="space-y-3 rounded-xl border border-border bg-card/70 p-3.5"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="relative">
-                        <span
-                          className={`size-2.5 rounded-full block ${server.isEnabled ? "bg-emerald-500 shadow-xs shadow-emerald-500/50" : "bg-muted-foreground"
-                            }`}
-                        />
-                        {server.isEnabled && (
-                          <span className="size-2.5 rounded-full bg-emerald-500 animate-ping absolute inset-0 opacity-75" />
-                        )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span
+                        className={`size-2.5 shrink-0 rounded-full ${
+                          server.isEnabled ? "bg-emerald-500" : "bg-muted-foreground"
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {server.name}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {server.botId ? "Scoped to this bot" : "Account-wide"}
+                          {server.transport ? ` · ${server.transport}` : ""}
+                        </p>
                       </div>
-
-                      <span className="font-semibold text-xs text-foreground truncate">
-                        {server.name}
-                      </span>
-
-                      {server.botId ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-mono font-medium">
-                          Scoped to bot
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-mono font-medium border border-primary/20">
-                          Account-wide
-                        </span>
-                      )}
                     </div>
 
-                    {/* Server Actions */}
-                    <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto">
+                    <div className="flex flex-wrap items-center gap-1 sm:justify-end">
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs px-2.5 gap-1.5 text-muted-foreground hover:text-foreground"
-                        onClick={() => handleTest(server.id)}
+                        className="h-8 gap-1.5 px-2 text-xs cursor-pointer"
+                        onClick={() => void handleTest(server.id)}
                         disabled={isTesting}
-                        title="Test server handshake and query tools"
                       >
-                        <RefreshCw className={`size-3 ${isTesting ? "animate-spin text-primary" : ""}`} />
-                        <span>Test Handshake</span>
+                        <RefreshCw className={`size-3.5 ${isTesting ? "animate-spin" : ""}`} />
+                        Test
                       </Button>
 
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className={`h-7 text-xs px-2.5 font-medium ${server.isEnabled
-                            ? "text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
-                            : "text-muted-foreground hover:text-foreground bg-muted"
-                          }`}
-                        onClick={() => handleToggle(server.id, server.isEnabled)}
+                        className={`h-8 px-2.5 text-xs cursor-pointer ${
+                          server.isEnabled
+                            ? "text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400"
+                            : "text-muted-foreground"
+                        }`}
+                        onClick={() => void handleToggle(server)}
                       >
-                        {server.isEnabled ? "Active" : "Paused"}
+                        {server.isEnabled ? "Enabled" : "Paused"}
                       </Button>
 
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(server.id)}
+                        className="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                        onClick={() => void handleDelete(server.id)}
+                        aria-label={`Delete ${server.name}`}
                         title="Remove server"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </div>
 
-                  {/* URL Row */}
-                  <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground bg-muted/40 px-2.5 py-1.5 rounded-lg border border-border/50">
-                    <span className="truncate">{server.url}</span>
-                    <button
+                  <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+                    <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-muted-foreground">
+                      {server.url}
+                    </span>
+                    <Button
                       type="button"
-                      onClick={() => handleCopyUrl(server.id, server.url)}
-                      className="p-1 hover:text-foreground text-muted-foreground transition-colors cursor-pointer shrink-0"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0 cursor-pointer"
+                      onClick={() => void handleCopyUrl(server.id, server.url)}
+                      aria-label="Copy endpoint URL"
                       title="Copy endpoint URL"
                     >
                       {copiedUrlId === server.id ? (
-                        <Check className="size-3 text-emerald-500" />
+                        <Check className="size-3.5 text-emerald-500" />
                       ) : (
-                        <Copy className="size-3" />
+                        <Copy className="size-3.5" />
                       )}
-                    </button>
+                    </Button>
                   </div>
 
-                  {/* Test Result Message */}
                   {test && (
                     <div
-                      className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${test.success
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                          : "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                        }`}
+                      className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${
+                        test.success
+                          ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+                          : "border-rose-500/20 bg-rose-500/5 text-rose-600 dark:text-rose-400"
+                      }`}
                     >
                       {test.success ? (
-                        <CheckCircle2 className="size-3.5 shrink-0" />
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
                       ) : (
-                        <AlertCircle className="size-3.5 shrink-0" />
+                        <AlertCircle className="mt-0.5 size-4 shrink-0" />
                       )}
                       <span>{test.message}</span>
                     </div>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
