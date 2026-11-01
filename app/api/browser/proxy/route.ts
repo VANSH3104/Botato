@@ -5,7 +5,14 @@ import { isPublicNetworkDestination } from "@/lib/sandbox/security";
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    return new NextResponse(
+      `<!DOCTYPE html><html><body style="font-family:system-ui,-apple-system,sans-serif;padding:3rem 1.5rem;background:#0d0d0d;color:#eee;text-align:center;">
+        <h3 style="margin-bottom:0.5rem;font-size:1.125rem;">Authentication Required</h3>
+        <p style="color:#a1a1aa;font-size:0.875rem;max-width:320px;margin:0 auto 1.5rem;">Please log in to your Botato account to view and navigate the Live Browser.</p>
+        <a href="/sign-in" style="display:inline-block;padding:0.5rem 1rem;background:#2563eb;color:#fff;border-radius:0.375rem;text-decoration:none;font-size:0.875rem;font-weight:500;">Sign in to Botato</a>
+      </body></html>`,
+      { status: 401, headers: { "Content-Type": "text/html; charset=utf-8" } }
+    );
   }
 
   const { searchParams } = new URL(req.url);
@@ -89,8 +96,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Strip client-side meta refresh tags so they don't redirect the iframe to localhost
+    // Strip client-side meta refresh and CSP tags so they don't block the iframe
     html = html.replace(/<meta[^>]*http-equiv=["']?refresh["']?[^>]*>/gi, "");
+    html = html.replace(/<meta[^>]*http-equiv=["']?content-security-policy["']?[^>]*>/gi, "");
 
     // Inject base tag with final URL so relative links, styles, and assets resolve accurately
     const baseTag = `<base href="${finalUrl}">`;
