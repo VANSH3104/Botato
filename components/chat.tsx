@@ -34,7 +34,6 @@ import {
   Check,
   RotateCcw,
   Pencil,
-  Zap,
   Sparkles,
   Paperclip,
   FileText,
@@ -1227,10 +1226,6 @@ function ChatInner({
                                   </button>
                                 )}
 
-                                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono ml-auto">
-                                  <Zap className="size-3 text-amber-500/80" />
-                                  <span>Fast Inference</span>
-                                </span>
                               </div>
                             )}
 
