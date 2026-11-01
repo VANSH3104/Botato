@@ -8,10 +8,9 @@ import { clearChatSession } from "@/actions/chat"
 import type { Chat as ChatData } from "@/chats/queries"
 
 export function ChatWorkspace({
-  chatId: _chatId,
   chat,
 }: {
-  chatId: string
+  chatId?: string
   chat: ChatData
 }) {
   const [isDesktopOpen, setIsDesktopOpen] = React.useState<boolean>(false)
@@ -72,6 +71,9 @@ export function ChatWorkspace({
             onClose={() => setIsDesktopOpen(false)}
             initialTab={activeTab}
             initialBrowserUrl={browserUrl}
+            initialSandboxId={chat.isGroup ? chat.bots?.[0]?.sandboxId ?? undefined : chat.bot?.sandboxId ?? undefined}
+            botId={chat.isGroup ? chat.bots?.[0]?.id : chat.bot?.id}
+            bots={chat.isGroup ? chat.bots : undefined}
           />
         )}
       </div>

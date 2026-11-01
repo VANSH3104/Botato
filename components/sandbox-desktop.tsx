@@ -22,6 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getBotSandbox } from "@/actions/sandbox";
 
 interface FileEntry {
   name: string;
@@ -45,13 +46,29 @@ export function SandboxDesktop({
   initialSandboxId,
   initialTab = "terminal",
   initialBrowserUrl,
+  botId,
+  bots,
 }: {
   isOpen: boolean;
   onClose: () => void;
   initialSandboxId?: string;
   initialTab?: "terminal" | "files" | "browser";
   initialBrowserUrl?: string;
+  botId?: string;
+  bots?: Array<{ id: string; name: string; avatar: string; sandboxId?: string | null }>;
 }) {
+  const [selectedBotId, setSelectedBotId] = React.useState<string>(() => {
+    return botId || bots?.[0]?.id || "";
+  });
+
+  React.useEffect(() => {
+    if (botId) {
+      setSelectedBotId(botId);
+    } else if (bots && bots.length > 0 && !selectedBotId) {
+      setSelectedBotId(bots[0].id);
+    }
+  }, [botId, bots]);
+
   const [activeTab, setActiveTab] = React.useState<"terminal" | "files" | "browser">(initialTab);
 
   React.useEffect(() => {
@@ -130,6 +147,32 @@ export function SandboxDesktop({
     }
   };
 
+  const loadBotSandbox = React.useCallback(async (targetBotId: string) => {
+    if (!targetBotId) return null;
+    setIsLoading(true);
+    try {
+      const res = await getBotSandbox(targetBotId);
+      if (res.success && res.sandboxId) {
+        setSandboxId(res.sandboxId);
+        setIsOnline(true);
+        return res.sandboxId;
+      }
+    } catch (e) {
+      console.error("Failed to load bot sandbox:", e);
+    } finally {
+      setIsLoading(false);
+    }
+    return null;
+  }, []);
+
+  const handleBotChange = async (newBotId: string) => {
+    setSelectedBotId(newBotId);
+    setSelectedFile(null);
+    setFiles([]);
+    setCommandLogs([]);
+    await loadBotSandbox(newBotId);
+  };
+
   // Check health and initialize sandbox
   const checkHealthAndInit = React.useCallback(async () => {
     setIsLoading(true);
@@ -138,6 +181,14 @@ export function SandboxDesktop({
       const data = await res.json();
       if (res.ok && data.status === "ok") {
         setIsOnline(true);
+        if (selectedBotId) {
+          const sId = await loadBotSandbox(selectedBotId);
+          if (sId) return;
+        }
+        if (initialSandboxId && !sandboxId) {
+          setSandboxId(initialSandboxId);
+          return;
+        }
         if (!sandboxId) {
           // Auto create a sandbox if none active
           const createRes = await fetch("/api/sandbox", {
@@ -158,7 +209,7 @@ export function SandboxDesktop({
     } finally {
       setIsLoading(false);
     }
-  }, [sandboxId]);
+  }, [selectedBotId, initialSandboxId, sandboxId, loadBotSandbox]);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -312,7 +363,7 @@ export function SandboxDesktop({
               }`}
             />
             <span className="text-xs font-semibold tracking-tight">
-              {isOnline === true ? "Sandbox Online" : isOnline === false ? "Sandbox Offline" : "Connecting..."}
+              {isOnline === true ? "Browser Online" : isOnline === false ? "Browser Offline" : "Connecting..."}
             </span>
           </div>
 
@@ -326,6 +377,23 @@ export function SandboxDesktop({
               {copied ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
             </button>
           )}
+
+          {bots && bots.length > 1 && (
+            <div className="flex items-center gap-1.5 bg-background border border-border/70 rounded-md px-2 py-0.5 ml-1">
+              <span className="text-[10px] text-muted-foreground font-medium">Bot:</span>
+              <select
+                value={selectedBotId}
+                onChange={(e) => handleBotChange(e.target.value)}
+                className="bg-transparent text-xs text-foreground outline-none cursor-pointer font-medium"
+              >
+                {bots.map((b) => (
+                  <option key={b.id} value={b.id} className="bg-popover text-popover-foreground">
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -333,17 +401,7 @@ export function SandboxDesktop({
             variant="ghost"
             size="icon"
             className="size-7 text-muted-foreground hover:text-foreground"
-            onClick={handleCreateNewSandbox}
-            title="Create fresh sandbox"
-            disabled={isLoading}
-          >
-            <Plus className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-7 text-muted-foreground hover:text-foreground"
-            onClick={activeTab === "files" ? fetchFiles : checkHealthAndInit}
+            onClick={checkHealthAndInit}
             title="Refresh"
             disabled={isLoading}
           >
@@ -354,204 +412,17 @@ export function SandboxDesktop({
             size="icon"
             className="size-7 text-muted-foreground hover:text-foreground"
             onClick={onClose}
-            title="Close desktop view"
+            title="Close browser view"
           >
             <X className="size-4" />
           </Button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center border-b border-border bg-background px-2 gap-1">
-        <button
-          onClick={() => setActiveTab("terminal")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-            activeTab === "terminal"
-              ? "border-primary text-foreground font-semibold"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Terminal className="size-3.5" />
-          Terminal
-        </button>
-        <button
-          onClick={() => setActiveTab("files")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-            activeTab === "files"
-              ? "border-primary text-foreground font-semibold"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <FolderTree className="size-3.5" />
-          Files {files.length > 0 && `(${files.length})`}
-        </button>
-        <button
-          onClick={() => setActiveTab("browser")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-            activeTab === "browser"
-              ? "border-primary text-foreground font-semibold"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Globe className="size-3.5" />
-          Browser
-        </button>
-      </div>
 
-      {/* Panel Content Body */}
-      <div className="flex-1 min-h-0 flex flex-col bg-background overflow-hidden">
-        {/* Terminal Tab */}
-        {activeTab === "terminal" && (
-          <div className="flex-1 flex flex-col h-full overflow-hidden bg-black text-emerald-400 font-mono text-xs">
-            {/* Terminal Output Logs */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              <div className="text-muted-foreground text-[11px] pb-2 border-b border-emerald-900/30">
-                Botato Isolated Execution Sandbox (Debian GNU/Linux, Node 22, Python 3)
-                <br />
-                Workspace: /workspaces/{sandboxId || "..."}
-              </div>
 
-              {commandLogs.length === 0 ? (
-                <div className="text-zinc-500 py-6 text-center text-[11px]">
-                  No commands run yet. Try running:
-                  <div className="flex justify-center gap-2 mt-2">
-                    <button
-                      onClick={() => setCommandInput("python3 --version")}
-                      className="px-2 py-1 rounded bg-zinc-900 text-zinc-300 hover:text-emerald-400 border border-zinc-800"
-                    >
-                      python3 --version
-                    </button>
-                    <button
-                      onClick={() => setCommandInput("node -v")}
-                      className="px-2 py-1 rounded bg-zinc-900 text-zinc-300 hover:text-emerald-400 border border-zinc-800"
-                    >
-                      node -v
-                    </button>
-                    <button
-                      onClick={() => setCommandInput("ls -la")}
-                      className="px-2 py-1 rounded bg-zinc-900 text-zinc-300 hover:text-emerald-400 border border-zinc-800"
-                    >
-                      ls -la
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                commandLogs.map((log) => (
-                  <div key={log.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-zinc-400 text-[10px]">
-                      <span className="text-emerald-500 font-bold">$ {log.command}</span>
-                      <span>{log.timestamp}</span>
-                    </div>
-                    {log.stdout && (
-                      <pre className="whitespace-pre-wrap break-all text-zinc-200 bg-zinc-950/70 p-2 rounded border border-zinc-900">
-                        {log.stdout}
-                      </pre>
-                    )}
-                    {log.stderr && (
-                      <pre className="whitespace-pre-wrap break-all text-rose-400 bg-rose-950/20 p-2 rounded border border-rose-900/30">
-                        {log.stderr}
-                      </pre>
-                    )}
-                  </div>
-                ))
-              )}
-              <div ref={terminalBottomRef} />
-            </div>
-
-            {/* Terminal Command Input Form */}
-            <form onSubmit={handleExecute} className="p-2 border-t border-zinc-800 bg-zinc-950 flex gap-2 items-center">
-              <span className="text-emerald-500 font-bold pl-1">$</span>
-              <input
-                type="text"
-                value={commandInput}
-                onChange={(e) => setCommandInput(e.target.value)}
-                placeholder="Type command (e.g. python3 -c 'print(42)' or ls)..."
-                disabled={!isOnline || isLoading}
-                className="flex-1 bg-transparent text-emerald-400 outline-none text-xs placeholder:text-zinc-600 font-mono"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                variant="outline"
-                disabled={!commandInput.trim() || !isOnline || isLoading}
-                className="h-7 px-2.5 text-xs border-emerald-900 text-emerald-400 hover:bg-emerald-950 hover:text-emerald-300"
-              >
-                {isLoading ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
-              </Button>
-            </form>
-          </div>
-        )}
-
-        {/* Files Tab */}
-        {activeTab === "files" && (
-          <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
-            {/* File List Column */}
-            <div className="w-full md:w-52 border-b md:border-b-0 md:border-r border-border overflow-y-auto p-2 space-y-1">
-              <div className="text-[11px] font-medium text-muted-foreground px-2 py-1 flex items-center justify-between">
-                <span>WORKSPACE FILES</span>
-                <button onClick={fetchFiles} className="hover:text-foreground">
-                  <RefreshCw className="size-3" />
-                </button>
-              </div>
-
-              {files.length === 0 ? (
-                <div className="text-xs text-muted-foreground p-3 text-center">
-                  Workspace is empty. Files written by Botato will show here.
-                </div>
-              ) : (
-                files.map((file) => (
-                  <button
-                    key={file.path}
-                    onClick={() => !file.isDirectory && handleViewFile(file.path)}
-                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-xs transition-colors ${
-                      selectedFile?.path === file.path
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted text-foreground"
-                    }`}
-                  >
-                    {file.isDirectory ? (
-                      <FolderTree className="size-3.5 text-amber-500 shrink-0" />
-                    ) : (
-                      <FileText className="size-3.5 text-blue-500 shrink-0" />
-                    )}
-                    <span className="truncate flex-1">{file.name}</span>
-                    {file.sizeBytes !== undefined && (
-                      <span className="text-[10px] text-muted-foreground shrink-0">{file.sizeBytes}B</span>
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-
-            {/* File Content Preview Column */}
-            <div className="flex-1 flex flex-col overflow-hidden bg-muted/20">
-              {selectedFile ? (
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-background text-xs font-mono">
-                    <span className="truncate text-foreground font-medium">{selectedFile.path}</span>
-                    <button
-                      onClick={() => setSelectedFile(null)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </div>
-                  <pre className="flex-1 overflow-auto p-3 text-xs font-mono text-foreground whitespace-pre">
-                    {selectedFile.content}
-                  </pre>
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-6 text-center text-xs text-muted-foreground">
-                  Select a file from the list to view its code and contents.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Browser Tab */}
-        {activeTab === "browser" && (
-          <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
+      {/* Real Browser Viewport */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
             {/* Real Browser Navigation Bar */}
             <div className="flex items-center gap-1.5 p-2 border-b border-border bg-muted/40">
               <Button
@@ -666,8 +537,6 @@ export function SandboxDesktop({
               )}
             </div>
           </div>
-        )}
-      </div>
     </div>
   );
 }

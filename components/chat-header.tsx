@@ -4,7 +4,9 @@ import { Monitor } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { ChatAvatar } from "@/components/chat-avatar"
+import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { BotDialog } from "@/components/bot-dialog"
+import { GroupChatDialog } from "@/components/group-chat-dialog"
 import type { Chat } from "@/chats/queries"
 
 export interface ChatHeaderProps {
@@ -32,7 +34,32 @@ export function ChatHeader({
       className={`flex h-12 w-full shrink-0 items-center justify-between border-b border-border bg-background px-4 ${className ?? ""}`}
     >
       <div className="flex items-center min-w-0">
-        {targetBot ? (
+        {chat.isGroup ? (
+          <GroupChatDialog
+            initialGroup={{
+              id: chat.id,
+              name: chat.name,
+              bots: chat.bots ?? [],
+            }}
+            trigger={
+              <button
+                type="button"
+                className="group flex items-center gap-2.5 min-w-0 -my-1 -ml-1.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                aria-label={`Edit ${chat.name}`}
+                title="Edit group chat or manage bots"
+              >
+                <GroupChatAvatar
+                  bots={chat.bots}
+                  seed={chat.avatar}
+                  className="size-8 shrink-0 rounded-md transition-transform group-hover:scale-105"
+                />
+                <span className="truncate text-sm font-medium text-foreground">
+                  {chat.name}
+                </span>
+              </button>
+            }
+          />
+        ) : targetBot ? (
           <BotDialog
             initialBot={targetBot}
             trigger={
@@ -73,10 +100,10 @@ export function ChatHeader({
           aria-label="Desktop Sandbox"
           title={
             isDesktopOpen
-              ? "Close Sandbox Desktop"
+              ? "Close Live Browser"
               : hasSandboxActivity
-              ? "Sandbox active — click to view Terminal / Browser"
-              : "Open Sandbox Desktop"
+              ? "Browser active — click to view Live Browser"
+              : "Open Live Browser"
           }
           className={`relative size-8 transition-colors ${
             isDesktopOpen
