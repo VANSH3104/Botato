@@ -48,8 +48,8 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-0 gap-0">
-        <div className="flex h-12 items-center justify-between px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+      <SidebarHeader className="flex flex-col gap-2 p-2">
+        <div className="flex flex-row items-center justify-between group-data-[collapsible=icon]:justify-center">
           <Link
             href="/"
             className="flex items-center gap-2 px-1 text-sm font-semibold tracking-tight text-sidebar-foreground hover:opacity-85 transition-opacity group-data-[collapsible=icon]:hidden"
@@ -59,10 +59,10 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
           </Link>
           <SidebarHeaderActions bots={bots.filter((b) => !b.isGroup)} />
         </div>
-        <div className="p-2 group-data-[collapsible=icon]:p-1">
-          <SidebarSearch bots={bots} />
-        </div>
+        <SidebarSearch bots={bots} />
       </SidebarHeader>
+
+      <SidebarSeparator className="mx-0" />
 
       <SidebarContent>
         <SidebarGroup>
@@ -73,15 +73,13 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarSeparator className="mx-0" />
-
-      <SidebarFooter className="p-2 border-t border-sidebar-border/60 bg-sidebar-accent/15">
+      <SidebarFooter className="p-2 border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
               render={<div />}
-              className="h-11 w-full p-1.5 rounded-lg hover:bg-sidebar-accent/50 data-active:bg-sidebar-accent/50 transition-colors [&>div]:w-full [&>div]:h-full group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+              className="h-12 w-full p-0 hover:bg-transparent data-active:bg-transparent [&>div]:w-full [&>div]:h-full group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
             >
               <UserButton
                 showName
