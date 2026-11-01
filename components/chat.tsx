@@ -25,7 +25,17 @@ import {
 import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { Spinner } from "@/components/ui/spinner"
-import { Terminal, ExternalLink, ChevronDown } from "lucide-react"
+import {
+  Terminal,
+  ExternalLink,
+  ChevronDown,
+  Copy,
+  Check,
+  RotateCcw,
+  Pencil,
+  Zap,
+  Sparkles,
+} from "lucide-react"
 import { extractSnippetFromMessage } from "@/lib/utils"
 import type { UIMessage } from "ai"
 import type { Chat as ChatData } from "@/chats/queries"
@@ -91,6 +101,34 @@ function extractBotFromText(
   }
 
   return { bot: undefined, cleanText: text }
+}
+
+function renderUserMessageWithMentions(
+  text: string,
+  botsList: Array<{ id: string; name: string }>
+) {
+  if (!text) return null
+  if (!botsList || botsList.length === 0) return text
+
+  const names = botsList.map((b) => b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
+  const regex = new RegExp(`(@(?:everyone|all|${names}))\\b`, "gi")
+
+  const parts = text.split(regex)
+  if (parts.length <= 1) return text
+
+  return parts.map((part, i) => {
+    if (regex.test(part)) {
+      return (
+        <span
+          key={i}
+          className="inline-flex items-center font-medium text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary-foreground mx-0.5"
+        >
+          {part}
+        </span>
+      )
+    }
+    return part
+  })
 }
 
 function parseAssistantMessageSegments(
@@ -573,12 +611,47 @@ function ChatInner({
     }
   }
 
-  const { messages, sendMessage, stop, status } = useChat({
+  const { messages, sendMessage, stop, status, regenerate } = useChat({
     id: chatId,
     messages: initialMessages,
     transport,
     resume: initialMessages.length > 0,
   })
+
+  const [copiedId, setCopiedId] = React.useState<string | null>(null)
+
+  const handleCopyText = React.useCallback((id: string, text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }, [])
+
+  const handleEditPrompt = React.useCallback((text: string) => {
+    setInput(text)
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
+  }, [])
+
+  const handleSendStarterPrompt = React.useCallback(
+    (promptText: string) => {
+      if (chat.isGroup && chat.bots) {
+        for (const b of chat.bots) {
+          const nameClean = b.name.trim().toLowerCase()
+          const regex = new RegExp(`@${b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\b|\\s|:|,|$)`, "i")
+          if (regex.test(promptText) || promptText.toLowerCase().includes(`@${nameClean}`)) {
+            setSelectedBotId(b.id)
+            break
+          }
+        }
+      }
+      sendMessage({ text: promptText })
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+      }
+    },
+    [chat, sendMessage, setSelectedBotId]
+  )
 
   // Synchronize messages to local cache so conversation history is never lost on reload
   const prevMessagesLengthRef = React.useRef(messages.length)
@@ -701,37 +774,109 @@ function ChatInner({
           }`}
         >
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center gap-3">
+            <div className="flex flex-col items-center justify-center text-center gap-3 max-w-lg mx-auto my-auto">
               {chat.isGroup ? (
                 <>
                   <GroupChatAvatar
                     bots={chat.bots ?? []}
                     seed={chat.avatar}
-                    className="size-16 rounded-2xl shadow-sm mb-2 border border-border/60 p-1 bg-muted/40"
+                    className="size-16 rounded-2xl shadow-sm mb-1 border border-border/60 p-1 bg-muted/40"
                   />
                   <h2 className="text-lg font-semibold text-foreground">
                     {chat.name}
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-sm">
+                  <p className="text-xs text-muted-foreground max-w-sm mb-1">
                     {chat.bots && chat.bots.length > 0
                       ? chat.bots.map((b) => `${b.name} (${b.job || "Member"})`).join(" • ")
                       : "Group Chat"}
                   </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full pt-2">
+                    {[
+                      {
+                        title: "Plan sprint with team",
+                        prompt: `@everyone Let's align on priorities: research requirements and outline key tasks.`,
+                      },
+                      {
+                        title: "Research & cite sources",
+                        prompt: chat.bots?.[0]
+                          ? `@${chat.bots[0].name} research recent advancements in autonomous AI agents and cite key findings.`
+                          : "Research recent advancements in autonomous AI agents and cite key findings.",
+                      },
+                      {
+                        title: "Code in sandbox",
+                        prompt: "Write a high-performance TypeScript script to validate API responses and execute it in sandbox.",
+                      },
+                      {
+                        title: "Audit architecture",
+                        prompt: "Audit our current architecture for security, edge cases, and privacy safeguards.",
+                      },
+                    ].map((item) => (
+                      <button
+                        key={item.title}
+                        type="button"
+                        onClick={() => handleSendStarterPrompt(item.prompt)}
+                        className="flex flex-col items-start p-2.5 rounded-xl border border-border/70 bg-card hover:bg-muted/70 hover:border-primary/40 text-left transition-all shadow-2xs group cursor-pointer"
+                      >
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 group-hover:text-primary">
+                          <Sparkles className="size-3 text-primary" />
+                          {item.title}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                          {item.prompt}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </>
               ) : (
                 <>
                   <ChatAvatar
                     seed={bot?.avatar ?? chat.avatar}
-                    className="size-16 rounded-2xl shadow-sm mb-2 border border-border/60"
+                    className="size-16 rounded-2xl shadow-sm mb-1 border border-border/60"
                   />
                   <h2 className="text-lg font-semibold text-foreground">
                     Chat with {bot?.name ?? chat.name}
                   </h2>
-                  <p className="text-sm text-muted-foreground max-w-sm">
+                  <p className="text-xs text-muted-foreground max-w-sm mb-1">
                     {bot?.instructions?.trim() ||
                       bot?.job?.trim() ||
                       "Ask anything to begin the conversation."}
                   </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full pt-2">
+                    {[
+                      {
+                        title: "Explore web documentation",
+                        prompt: "Browse the web for the latest updates on AI model context protocol.",
+                      },
+                      {
+                        title: "Run sandbox test",
+                        prompt: "Run a system health check and test python/bash in your isolated sandbox.",
+                      },
+                      {
+                        title: "Remember my preferences",
+                        prompt: "Add a note to your MEMORY.md: I prefer clean, concise TypeScript with zero external bloat.",
+                      },
+                      {
+                        title: "Brainstorm capabilities",
+                        prompt: `What are 3 impactful tasks you can autonomously solve given your role as ${bot?.job || "assistant"}?`,
+                      },
+                    ].map((item) => (
+                      <button
+                        key={item.title}
+                        type="button"
+                        onClick={() => handleSendStarterPrompt(item.prompt)}
+                        className="flex flex-col items-start p-2.5 rounded-xl border border-border/70 bg-card hover:bg-muted/70 hover:border-primary/40 text-left transition-all shadow-2xs group cursor-pointer"
+                      >
+                        <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 group-hover:text-primary">
+                          <Sparkles className="size-3 text-primary" />
+                          {item.title}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                          {item.prompt}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -749,17 +894,39 @@ function ChatInner({
                 }
 
                 if (isUser) {
+                  const userText = message.parts
+                    .filter((p) => p.type === "text" && typeof p.text === "string")
+                    .map((p) => (p as { text: string }).text)
+                    .join("\n")
+
                   return (
-                    <div key={message.id} className="flex justify-end w-full">
+                    <div key={message.id} className="group relative flex justify-end w-full">
                       <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-secondary px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-secondary-foreground whitespace-pre-wrap break-words leading-relaxed shadow-xs">
-                        {message.parts.map((part, i) => {
-                          if (part.type === "text") {
-                            return (
-                              <span key={`${message.id}-${i}`}>{part.text}</span>
-                            )
-                          }
-                          return null
-                        })}
+                        {renderUserMessageWithMentions(userText, chat.bots || [])}
+                      </div>
+
+                      {/* Hover action bar for user messages */}
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-3 right-2 flex items-center gap-1 bg-background/95 border border-border/80 shadow-xs rounded-md px-1.5 py-0.5 text-muted-foreground z-10">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(message.id, userText)}
+                          className="hover:text-foreground p-0.5 rounded cursor-pointer"
+                          title="Copy prompt"
+                        >
+                          {copiedId === message.id ? (
+                            <Check className="size-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="size-3" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditPrompt(userText)}
+                          className="hover:text-foreground p-0.5 rounded cursor-pointer"
+                          title="Edit prompt"
+                        >
+                          <Pencil className="size-3" />
+                        </button>
                       </div>
                     </div>
                   )
@@ -896,6 +1063,46 @@ function ChatInner({
                               <MessageResponse>
                                 {segment.text}
                               </MessageResponse>
+                            )}
+
+                            {segment.text && !isBusy && (
+                              <div className="flex items-center gap-2 pt-1 text-muted-foreground text-xs select-none">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyText(`${message.id}-${segment.key}`, segment.text)}
+                                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5 px-1.5 rounded hover:bg-muted"
+                                  title="Copy message"
+                                >
+                                  {copiedId === `${message.id}-${segment.key}` ? (
+                                    <>
+                                      <Check className="size-3 text-emerald-500" />
+                                      <span className="text-emerald-500 text-[10px]">Copied</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="size-3" />
+                                      <span className="text-[10px]">Copy</span>
+                                    </>
+                                  )}
+                                </button>
+
+                                {segment.isLast && isLatestAssistant && status !== "streaming" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => regenerate()}
+                                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer py-0.5 px-1.5 rounded hover:bg-muted"
+                                    title="Regenerate response"
+                                  >
+                                    <RotateCcw className="size-3" />
+                                    <span className="text-[10px]">Regenerate</span>
+                                  </button>
+                                )}
+
+                                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-muted-foreground/60 font-mono ml-auto">
+                                  <Zap className="size-3 text-amber-500/80" />
+                                  <span>Groq LPU</span>
+                                </span>
+                              </div>
                             )}
 
                             {isBusy && segment.isLast && (
