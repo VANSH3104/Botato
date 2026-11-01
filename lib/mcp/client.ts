@@ -53,7 +53,21 @@ export class McpClient {
       });
 
       if (!res.ok) {
-        throw new Error(`MCP request failed: HTTP ${res.status} ${res.statusText}`);
+        let detail = "";
+        try {
+          const errBody = (await res.json()) as { error?: { message?: string } | string; message?: string };
+          if (typeof errBody?.error === "object" && errBody.error?.message) {
+            detail = errBody.error.message;
+          } else if (typeof errBody?.message === "string") {
+            detail = errBody.message;
+          } else if (typeof errBody?.error === "string") {
+            detail = errBody.error;
+          }
+        } catch {
+          // ignore json parse failure
+        }
+        const extra = detail ? ` - ${detail}` : "";
+        throw new Error(`MCP request failed: HTTP ${res.status} ${res.statusText}${extra}`);
       }
 
       const json = (await res.json()) as JsonRpcResponse<T>;
