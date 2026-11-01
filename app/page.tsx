@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   ExternalLink,
   Code2,
-  Database,
-  FileText,
 } from "lucide-react";
 import { BotatoLogo, BotatoIcon, GitHubIcon } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -42,9 +40,6 @@ export default async function LandingPage() {
             </a>
             <a href="#sandboxes" className="hover:text-foreground transition-colors">
               Sandboxes &amp; Browser
-            </a>
-            <a href="#mcp" className="hover:text-foreground transition-colors">
-              Connected Apps &amp; MCP
             </a>
             <a href="#simulator" className="hover:text-foreground transition-colors">
               Playground
@@ -288,176 +283,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* Deep Dive Section: Privacy & MCP */}
-      <section id="mcp" className="py-20 border-t border-border/80 bg-muted/20 scroll-mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Visual Mock Control Window */}
-            <div className="order-2 lg:order-1 rounded-2xl border border-border/90 bg-card/95 shadow-2xl overflow-hidden backdrop-blur-xl">
-              {/* Window Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/80 bg-muted/60">
-                <div className="flex items-center gap-2">
-                  <span className="size-2.5 rounded-full bg-rose-500/80 inline-block" />
-                  <span className="size-2.5 rounded-full bg-amber-500/80 inline-block" />
-                  <span className="size-2.5 rounded-full bg-emerald-500/80 inline-block" />
-                  <span className="text-xs font-mono text-muted-foreground ml-2">
-                    botato-gateway // zero-leak-proxy
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>4 Services Connected</span>
-                </div>
-              </div>
-
-              {/* Service Cards Showcase */}
-              <div className="p-4 sm:p-5 space-y-2.5">
-                {/* GitHub MCP Card */}
-                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
-                      <Code2 className="size-4 text-violet-400 shrink-0" />
-                      <span>GitHub MCP</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">VANSH3104/Botato</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                      Active • 12 Tools
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>Auth: ghp_•••••••••••• (Injected via Proxy)</span>
-                    <span className="text-emerald-400 text-[10.5px]">✓ PR reviews, issues, diff checks</span>
-                  </div>
-                </div>
-
-                {/* Linear Workspace */}
-                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
-                      <CheckCircle2 className="size-4 text-indigo-400 shrink-0" />
-                      <span>Linear Workspace</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                      Active • 8 Tools
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>Auth: lin_api_•••••••• (Encrypted)</span>
-                    <span className="text-indigo-400 text-[10.5px]">✓ Sprint triage &amp; backlog tasks</span>
-                  </div>
-                </div>
-
-                {/* Notion Workspace */}
-                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
-                      <FileText className="size-4 text-amber-400 shrink-0" />
-                      <span>Notion Workspace</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                      Active • 6 Tools
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>Auth: secret_•••••••• (Encrypted)</span>
-                    <span className="text-amber-400 text-[10.5px]">✓ Search docs &amp; update specs</span>
-                  </div>
-                </div>
-
-                {/* PostgreSQL Database */}
-                <div className="rounded-xl border border-border/80 bg-background/90 p-3 sm:p-3.5 space-y-1.5 shadow-2xs hover:border-primary/40 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-medium text-xs text-foreground">
-                      <Database className="size-4 text-cyan-400 shrink-0" />
-                      <span>PostgreSQL Database</span>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                      Active • Read-Only
-                    </span>
-                  </div>
-                  <div className="font-mono text-[11px] text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>postgresql://botato:••••@proxy</span>
-                    <span className="text-cyan-400 text-[10.5px]">✓ Schema inspection &amp; query limits</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Security Banner */}
-              <div className="px-4 py-3 border-t border-border/80 bg-emerald-500/5 text-xs text-emerald-300 flex items-center gap-2">
-                <ShieldCheck className="size-4 shrink-0 text-emerald-400" />
-                <span className="leading-tight">
-                  <strong>Strict SSRF Defense:</strong> Private IP subnets (127.0.0.1, 10.x, 192.168.x) are blocked before network dispatch.
-                </span>
-              </div>
-            </div>
-
-            {/* Right Column: Copy & Value Proposition */}
-            <div className="order-1 lg:order-2 space-y-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-mono text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                <Lock className="size-3.5" />
-                <span>Enterprise Privacy Standard</span>
-              </div>
-              
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-[1.2]">
-                Connect Every Tool Safely with Model Context Protocol
-              </h2>
-              
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                Connect any of the thousands of MCP servers in the ecosystem. Your bots can read GitHub issues, update Jira/Linear tasks, query Postgres databases, and draft Notion documents—without ever exposing your credentials to the LLM.
-              </p>
-
-              <div className="space-y-3 text-sm text-foreground">
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Zero-Token Exposure:</strong> Keys and bearer tokens are proxy-injected server-side; LLM prompts never contain sensitive credentials.
-                  </span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Dynamic Tool Discovery:</strong> Schemas and capabilities are discovered on the fly via standard JSON-RPC handshakes.
-                  </span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Granular Bot Scoping:</strong> Assign apps account-wide or scope them strictly to specialized bots (e.g. Developer, Researcher).
-                  </span>
-                </div>
-              </div>
-
-              {/* Supported MCP Services Pills */}
-              <div className="pt-2">
-                <div className="text-xs font-medium text-muted-foreground mb-2">
-                  Popular Pre-Configured Services:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Google Drive",
-                    "Live Web Search",
-                    "Notion",
-                    "Slack",
-                    "Gmail",
-                    "Weather & Forecast",
-                    "GitHub",
-                    "Linear",
-                    "PostgreSQL",
-                    "Figma",
-                  ].map((app) => (
-                    <span
-                      key={app}
-                      className="text-xs px-2.5 py-1 rounded-lg bg-card border border-border/80 text-foreground font-medium hover:border-primary/40 transition-colors"
-                    >
-                      {app}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Interactive Simulator / Playground Section */}
       <section id="simulator" className="py-20 border-t border-border/80 scroll-mt-16">

@@ -118,17 +118,17 @@ export function BotDialog({
     resolver: zodResolver(createBotInputSchema),
     defaultValues: initialBot
       ? {
-          name: initialBot.name,
-          job: initialBot.job ?? "",
-          instructions: initialBot.instructions ?? "",
-          avatar: initialBot.avatar,
-        }
+        name: initialBot.name,
+        job: initialBot.job ?? "",
+        instructions: initialBot.instructions ?? "",
+        avatar: initialBot.avatar,
+      }
       : {
-          name: BOT_PRESETS[0].name,
-          job: BOT_PRESETS[0].job,
-          instructions: BOT_PRESETS[0].instructions,
-          avatar: nanoid(),
-        },
+        name: BOT_PRESETS[0].name,
+        job: BOT_PRESETS[0].job,
+        instructions: BOT_PRESETS[0].instructions,
+        avatar: nanoid(),
+      },
   })
 
   const avatar = useWatch({ control, name: "avatar" })
@@ -273,7 +273,7 @@ export function BotDialog({
         <DialogContent
           className={cn(
             "w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto transition-all duration-200",
-            activeTab === "mcp" ? "sm:max-w-2xl" : "max-w-[460px] sm:max-w-[460px]"
+            activeTab === "mcp" ? "sm:max-w-3xl md:max-w-4xl" : "max-w-[460px] sm:max-w-[460px]"
           )}
         >
           <DialogHeader>
@@ -290,22 +290,20 @@ export function BotDialog({
             <button
               type="button"
               onClick={() => setActiveTab("profile")}
-              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                activeTab === "profile"
+              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all cursor-pointer ${activeTab === "profile"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Persona & Profile
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("mcp")}
-              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === "mcp"
+              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === "mcp"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               <span>MCP & Apps</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">

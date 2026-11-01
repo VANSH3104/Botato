@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { GitHubIcon } from "@/components/logo";
+import { McpShowcaseDialog } from "@/components/mcp-showcase-dialog";
 
 export function LandingHeroDemo() {
   const [copied, setCopied] = React.useState(false);
@@ -91,9 +92,23 @@ export function LandingHeroDemo() {
             <span className="font-medium text-foreground">Isolated Linux Sandbox</span>
           </div>
 
-          <div className="absolute bottom-4 right-3 hidden sm:flex items-center gap-2 bg-background/85 backdrop-blur-md border border-border/80 rounded-xl px-3 py-1.5 text-xs shadow-lg">
-            <Layers className="size-4 text-cyan-400" />
-            <span className="font-medium text-foreground">Model Context Protocol (MCP)</span>
+          <div className="absolute bottom-4 right-3 hidden sm:flex items-center">
+            <McpShowcaseDialog
+              botName="Ada"
+              trigger={
+                <button
+                  type="button"
+                  className="group/pill flex items-center gap-2 bg-background/90 hover:bg-background backdrop-blur-md border border-border/80 hover:border-cyan-400/80 rounded-xl px-3 py-1.5 text-xs shadow-lg hover:shadow-cyan-500/10 hover:scale-[1.03] active:scale-95 transition-all cursor-pointer"
+                  title="Click to open Model Context Protocol showcase"
+                >
+                  <Layers className="size-4 text-cyan-400 group-hover/pill:rotate-12 transition-transform" />
+                  <span className="font-medium text-foreground group-hover/pill:text-cyan-300 transition-colors">
+                    Model Context Protocol (MCP)
+                  </span>
+                  <span className="size-1.5 rounded-full bg-cyan-400 animate-pulse ml-0.5" />
+                </button>
+              }
+            />
           </div>
         </div>
 

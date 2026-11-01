@@ -13,24 +13,32 @@ import {
   HelpCircle,
   Search,
   FileText,
-  MessageSquare,
-  Mail,
-  CloudSun,
-  Palette,
   Database,
   Code2,
   ArrowRight,
-  Sparkles,
   Zap,
   Check,
   X,
   Copy,
+  CreditCard,
+  Bug,
+  Cloud,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   listMcpServers,
   createMcpServer,
@@ -52,7 +60,7 @@ interface McpServerItem {
 
 export interface McpTemplate {
   name: string;
-  category: "productivity" | "search" | "communication" | "developer";
+  category: "productivity" | "search" | "developer";
   categoryLabel: string;
   url: string;
   headerKey?: string;
@@ -68,7 +76,91 @@ export interface McpTemplate {
 
 export const MCP_TEMPLATES: McpTemplate[] = [
   {
-    name: "Live Web Search",
+    name: "Neon Postgres",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://mcp.neon.tech/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer neon_...",
+    keyGuide: "API Key from Neon Console (console.neon.tech)",
+    desc: "Inspect Postgres tables, run queries, and manage database branches.",
+    icon: Database,
+    accentBg: "bg-cyan-500/10",
+    accentText: "text-cyan-500 dark:text-cyan-400",
+    accentBorder: "border-cyan-500/30",
+  },
+  {
+    name: "Supabase Database",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://mcp.supabase.com/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer sbp_...",
+    keyGuide: "Personal Access Token from supabase.com/dashboard/account/tokens",
+    desc: "Query Postgres database, inspect schemas, and view storage buckets.",
+    icon: Database,
+    accentBg: "bg-emerald-500/10",
+    accentText: "text-emerald-500 dark:text-emerald-400",
+    accentBorder: "border-emerald-500/30",
+  },
+  {
+    name: "Stripe Billing & Payments",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://mcp.stripe.com",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer rk_live_...",
+    keyGuide: "Restricted or Secret key from dashboard.stripe.com/apikeys",
+    desc: "Inspect customers, retrieve invoices, track subscriptions, and check balances.",
+    icon: CreditCard,
+    accentBg: "bg-indigo-500/10",
+    accentText: "text-indigo-500 dark:text-indigo-400",
+    accentBorder: "border-indigo-500/30",
+  },
+  {
+    name: "Sentry Error Tracking",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://mcp.sentry.io",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer sntrys_...",
+    keyGuide: "User Auth Token from sentry.io/settings/account/api/auth-tokens",
+    desc: "Query production issues, fetch crash stack traces, and review releases.",
+    icon: Bug,
+    accentBg: "bg-rose-500/10",
+    accentText: "text-rose-500 dark:text-rose-400",
+    accentBorder: "border-rose-500/30",
+  },
+  {
+    name: "Notion Workspace",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "https://mcp.notion.com/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer secret_...",
+    keyGuide: "Internal Integration Secret from notion.so/my-integrations",
+    desc: "Search pages, read workspace documents in markdown, and update databases.",
+    icon: FileText,
+    accentBg: "bg-stone-500/10",
+    accentText: "text-stone-700 dark:text-stone-300",
+    accentBorder: "border-stone-500/30",
+  },
+  {
+    name: "Linear Tasks",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://mcp.linear.app/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer lin_api_...",
+    keyGuide: "Personal API key from Linear Settings > Account > API",
+    desc: "Track issues, update sprints, and create backlog tasks.",
+    icon: CheckCircle2,
+    accentBg: "bg-indigo-500/10",
+    accentText: "text-indigo-500 dark:text-indigo-400",
+    accentBorder: "border-indigo-500/30",
+  },
+  {
+    name: "Brave Live Search",
     category: "search",
     categoryLabel: "Search & Web",
     url: "https://api.search.brave.com/res/v1/mcp",
@@ -82,128 +174,32 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     accentBorder: "border-amber-500/30",
   },
   {
-    name: "Live Weather & Forecast",
-    category: "search",
-    categoryLabel: "Search & Web",
-    url: "https://api.open-meteo.com/v1/mcp",
-    isFree: true,
-    desc: "Real-time weather reports, temperature, and forecasts worldwide. 100% free, no key needed.",
-    icon: CloudSun,
-    accentBg: "bg-sky-500/10",
-    accentText: "text-sky-500 dark:text-sky-400",
-    accentBorder: "border-sky-500/30",
-  },
-  {
-    name: "Google Drive & Docs",
-    category: "productivity",
-    categoryLabel: "Productivity",
-    url: "https://mcp.googleapis.com/drive/v1",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ya29...",
-    keyGuide: "OAuth token from Google Cloud Console",
-    desc: "Search Google Drive files, read Google Docs, and summarize spreadsheets.",
-    icon: FileText,
-    accentBg: "bg-emerald-500/10",
-    accentText: "text-emerald-500 dark:text-emerald-400",
-    accentBorder: "border-emerald-500/30",
-  },
-  {
-    name: "Notion Workspace",
-    category: "productivity",
-    categoryLabel: "Productivity",
-    url: "https://api.notion.com/v1/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer secret_...",
-    keyGuide: "Create an integration at notion.so/my-integrations",
-    desc: "Read workspace pages, organize task databases, and draft notes.",
-    icon: FileText,
-    accentBg: "bg-stone-500/10",
-    accentText: "text-stone-700 dark:text-stone-300",
-    accentBorder: "border-stone-500/30",
-  },
-  {
-    name: "Slack Channel",
-    category: "communication",
-    categoryLabel: "Chat & Mail",
-    url: "https://slack.com/api/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer xoxb-...",
-    keyGuide: "Bot user token from api.slack.com/apps",
-    desc: "Post updates to Slack channels, read thread replies, and summarize team chats.",
-    icon: MessageSquare,
-    accentBg: "bg-purple-500/10",
-    accentText: "text-purple-500 dark:text-purple-400",
-    accentBorder: "border-purple-500/30",
-  },
-  {
-    name: "Gmail Assistant",
-    category: "communication",
-    categoryLabel: "Chat & Mail",
-    url: "https://gmail.googleapis.com/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ya29...",
-    keyGuide: "OAuth token with gmail.readonly or send scope",
-    desc: "Search emails, organize message threads, and draft replies safely.",
-    icon: Mail,
-    accentBg: "bg-rose-500/10",
-    accentText: "text-rose-500 dark:text-rose-400",
-    accentBorder: "border-rose-500/30",
-  },
-  {
-    name: "GitHub MCP",
+    name: "Cloudflare Infrastructure",
     category: "developer",
     categoryLabel: "Dev Tools",
-    url: "https://api.github.com/mcp",
+    url: "https://mcp.cloudflare.com/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "API Token with Workers and KV permissions from dash.cloudflare.com",
+    desc: "Manage Cloudflare Workers, KV namespaces, DNS records, and R2 buckets.",
+    icon: Cloud,
+    accentBg: "bg-orange-500/10",
+    accentText: "text-orange-500 dark:text-orange-400",
+    accentBorder: "border-orange-500/30",
+  },
+  {
+    name: "GitHub Copilot MCP",
+    category: "developer",
+    categoryLabel: "Dev Tools",
+    url: "https://api.githubcopilot.com/mcp/",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer ghp_...",
-    keyGuide: "Personal access token from github.com/settings/tokens",
-    desc: "Create issues, review pull requests, and search repositories.",
+    keyGuide: "Personal access token with repo scope from github.com/settings/tokens",
+    desc: "Inspect repositories, search pull requests, check diffs, and review issues.",
     icon: Code2,
     accentBg: "bg-violet-500/10",
     accentText: "text-violet-500 dark:text-violet-400",
     accentBorder: "border-violet-500/30",
-  },
-  {
-    name: "Linear Tasks",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://api.linear.app/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer lin_api_...",
-    keyGuide: "Personal API key from Linear Settings > Account > API",
-    desc: "Track issues, update sprints, and create backlog tasks.",
-    icon: CheckCircle2,
-    accentBg: "bg-indigo-500/10",
-    accentText: "text-indigo-500 dark:text-indigo-400",
-    accentBorder: "border-indigo-500/30",
-  },
-  {
-    name: "Figma Design System",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://api.figma.com/v1/mcp",
-    headerKey: "X-Figma-Token",
-    headerPlaceholder: "figd_...",
-    keyGuide: "Personal Access Token from Figma Account Settings",
-    desc: "Inspect design files, extract colors, typography, and UI component specs.",
-    icon: Palette,
-    accentBg: "bg-pink-500/10",
-    accentText: "text-pink-500 dark:text-pink-400",
-    accentBorder: "border-pink-500/30",
-  },
-  {
-    name: "Postgres & Neon DB",
-    category: "developer",
-    categoryLabel: "Dev Tools",
-    url: "https://mcp.neon.tech/rpc",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer neon_...",
-    keyGuide: "Neon API key from console.neon.tech",
-    desc: "Run read-only database queries and inspect relational schemas safely.",
-    icon: Database,
-    accentBg: "bg-cyan-500/10",
-    accentText: "text-cyan-500 dark:text-cyan-400",
-    accentBorder: "border-cyan-500/30",
   },
 ];
 
@@ -426,46 +422,86 @@ export function McpSettings({
           {/* Showcase Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="size-4 text-primary" />
-                <h3 className="font-semibold text-foreground text-sm tracking-tight">
-                  Model Context Protocol Showcase
-                </h3>
-              </div>
+              <h3 className="font-semibold text-foreground text-sm tracking-tight">
+                Model Context Protocol Showcase
+              </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Connect external apps and live services so {botName || "your bot"} can read, search, and automate actions.
               </p>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs font-medium shrink-0 self-start sm:self-auto border-border/80 hover:border-primary/50"
-              onClick={() => {
-                setName("");
-                setUrl("");
-                setAuthHeader("");
-                setActiveGuide(null);
-                setActiveTemplate(null);
-                setIsAdding(true);
-              }}
-            >
-              <Plus className="size-3.5" />
-              <span>Custom Server</span>
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Select
+                onValueChange={(val) => {
+                  if (typeof val === "string") {
+                    const tpl = MCP_TEMPLATES.find((t) => t.name === val);
+                    if (tpl) handleApplyTemplate(tpl);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 w-[160px] text-xs font-medium border-border/80 bg-background/80">
+                  <SelectValue placeholder="Quick Connect..." />
+                </SelectTrigger>
+                <SelectContent align="end" alignItemWithTrigger={false} className="w-[230px]">
+                  <SelectGroup>
+                    <SelectLabel>Dev Tools</SelectLabel>
+                    {MCP_TEMPLATES.filter((t) => t.category === "developer").map((tpl) => (
+                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
+                        {tpl.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>Productivity</SelectLabel>
+                    {MCP_TEMPLATES.filter((t) => t.category === "productivity").map((tpl) => (
+                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
+                        {tpl.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>Search &amp; Web</SelectLabel>
+                    {MCP_TEMPLATES.filter((t) => t.category === "search").map((tpl) => (
+                      <SelectItem key={tpl.name} value={tpl.name} className="text-xs">
+                        {tpl.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs font-medium shrink-0 border-border/80 hover:border-primary/50"
+                onClick={() => {
+                  setName("");
+                  setUrl("");
+                  setAuthHeader("");
+                  setActiveGuide(null);
+                  setActiveTemplate(null);
+                  setIsAdding(true);
+                }}
+              >
+                <Plus className="size-3.5" />
+                <span>Custom Server</span>
+              </Button>
+            </div>
           </div>
 
           {/* Search & Category Filter Toolbar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1 border-t border-border/60">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <input
+              <Input
                 type="text"
                 placeholder="Search tools, databases, apps..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-7 text-xs rounded-lg border border-border/70 bg-background/80 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                className="h-8 pl-8 pr-7 text-xs rounded-lg border-border/70 bg-background/80 placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary"
               />
               {searchQuery && (
                 <button
@@ -479,33 +515,27 @@ export function McpSettings({
               )}
             </div>
 
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs shrink-0 scrollbar-none">
-              {[
-                { id: "all", label: "All" },
-                { id: "search", label: "Search & Web" },
-                { id: "productivity", label: "Productivity" },
-                { id: "communication", label: "Chat & Mail" },
-                { id: "developer", label: "Dev Tools" },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                    activeCategory === cat.id
-                      ? "bg-primary text-primary-foreground shadow-2xs font-semibold"
-                      : "bg-muted/70 text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+            {/* Category Filter Dropdown */}
+            <Select
+              value={activeCategory}
+              onValueChange={(val) => {
+                if (typeof val === "string") setActiveCategory(val);
+              }}
+            >
+              <SelectTrigger className="h-8 w-full sm:w-[150px] shrink-0 text-xs bg-background/80 border-border/70">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent align="end" alignItemWithTrigger={false} className="text-xs">
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="developer">Dev Tools</SelectItem>
+                <SelectItem value="productivity">Productivity</SelectItem>
+                <SelectItem value="search">Search &amp; Web</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Showcase Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 max-h-[300px] overflow-y-auto pr-1">
             {filteredTemplates.length === 0 ? (
               <div className="col-span-full py-8 text-center text-muted-foreground space-y-1">
                 <p className="text-xs">No MCP services found matching &ldquo;{searchQuery}&rdquo;</p>
@@ -764,9 +794,8 @@ export function McpSettings({
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="relative">
                         <span
-                          className={`size-2.5 rounded-full block ${
-                            server.isEnabled ? "bg-emerald-500 shadow-xs shadow-emerald-500/50" : "bg-muted-foreground"
-                          }`}
+                          className={`size-2.5 rounded-full block ${server.isEnabled ? "bg-emerald-500 shadow-xs shadow-emerald-500/50" : "bg-muted-foreground"
+                            }`}
                         />
                         {server.isEnabled && (
                           <span className="size-2.5 rounded-full bg-emerald-500 animate-ping absolute inset-0 opacity-75" />
@@ -807,11 +836,10 @@ export function McpSettings({
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className={`h-7 text-xs px-2.5 font-medium ${
-                          server.isEnabled
+                        className={`h-7 text-xs px-2.5 font-medium ${server.isEnabled
                             ? "text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
                             : "text-muted-foreground hover:text-foreground bg-muted"
-                        }`}
+                          }`}
                         onClick={() => handleToggle(server.id, server.isEnabled)}
                       >
                         {server.isEnabled ? "Active" : "Paused"}
@@ -850,11 +878,10 @@ export function McpSettings({
                   {/* Test Result Message */}
                   {test && (
                     <div
-                      className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${
-                        test.success
+                      className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${test.success
                           ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                           : "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                      }`}
+                        }`}
                     >
                       {test.success ? (
                         <CheckCircle2 className="size-3.5 shrink-0" />

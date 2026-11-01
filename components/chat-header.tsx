@@ -1,6 +1,6 @@
 "use client"
 
-import { Monitor } from "lucide-react"
+import { Monitor, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -8,6 +8,7 @@ import { ChatAvatar } from "@/components/chat-avatar"
 import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { BotDialog } from "@/components/bot-dialog"
 import { GroupChatDialog } from "@/components/group-chat-dialog"
+import { McpShowcaseDialog } from "@/components/mcp-showcase-dialog"
 import type { Chat } from "@/chats/queries"
 
 export interface ChatHeaderProps {
@@ -95,6 +96,22 @@ export function ChatHeader({
       </div>
 
       <div className="flex items-center gap-1">
+        <McpShowcaseDialog
+          botName={firstMember?.name ?? chat.name}
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Model Context Protocol Tools"
+              title="Explore Model Context Protocol (MCP) Tools"
+              className="size-8 text-muted-foreground hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
+            >
+              <Sparkles className="size-4" />
+            </Button>
+          }
+        />
+
         <Button
           type="button"
           variant="ghost"
