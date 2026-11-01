@@ -6,10 +6,25 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db/client";
 import { bots, createBotInputSchema, type CreateBotInput, updateBotInputSchema, type UpdateBotInput } from "@/lib/db/schema";
 
+import { defaultSandboxClient } from "@/lib/sandbox/client";
+
 export async function createBot(input: CreateBotInput) {
   const { userId } = await auth.protect();
 
   const validated = createBotInputSchema.parse(input);
+
+  let sandboxId: string | null = null;
+  try {
+    const sandbox = await defaultSandboxClient.createSandbox({ persistent: true });
+    sandboxId = sandbox.id;
+    await defaultSandboxClient.writeFile(
+      sandbox.id,
+      "MEMORY.md",
+      `# Memory for ${validated.name}\n\n- Created: ${new Date().toISOString()}\n- Initialized persistent memory.\n`
+    );
+  } catch (err) {
+    console.error("Failed to initialize sandbox/MEMORY.md for bot:", err);
+  }
 
   const [newBot] = await db
     .insert(bots)
@@ -19,6 +34,7 @@ export async function createBot(input: CreateBotInput) {
       avatar: validated.avatar,
       job: validated.job ? validated.job : null,
       instructions: validated.instructions ? validated.instructions : null,
+      sandboxId,
     })
     .returning();
 
