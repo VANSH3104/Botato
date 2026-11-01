@@ -35,6 +35,7 @@ import { toast } from "@/components/ui/toast"
 import { ChatAvatar } from "@/components/chat-avatar"
 import { createBot, updateBot, deleteBot } from "@/actions/bot"
 import { createBotInputSchema, type CreateBotInput, type Bot } from "@/lib/db/schema"
+import { McpSettings } from "@/components/mcp-settings"
 
 const BOT_PRESETS = [
   {
@@ -137,9 +138,12 @@ export function BotDialog({
     return BOT_PRESETS.find((p) => p.name === watchName && p.job === watchJob)?.label ?? null
   }, [watchName, watchJob])
 
+  const [activeTab, setActiveTab] = React.useState<"profile" | "mcp">("profile")
+
   // Reset form when dialog opens or initialBot changes
   React.useEffect(() => {
     if (open) {
+      setActiveTab("profile")
       if (initialBot) {
         reset({
           name: initialBot.name,
@@ -273,132 +277,186 @@ export function BotDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Preset chips */}
-          <div className="flex flex-wrap items-center gap-2">
-            {BOT_PRESETS.map((preset) => {
-              const isActive = activePreset === preset.label
-              return (
-                <Button
-                  key={preset.label}
-                  type="button"
-                  variant={isActive ? "secondary" : "outline"}
-                  size="sm"
-                  className="h-8 rounded-full text-xs font-normal"
-                  onClick={() => handleApplyPreset(preset)}
-                >
-                  {preset.label}
-                </Button>
-              )
-            })}
-          </div>
-
-          {/* Face section */}
-          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-background ring-1 ring-border shadow-xs">
-                <ChatAvatar seed={avatar || "bot"} className="size-9" />
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium leading-none">Face</span>
-                <span className="text-xs text-muted-foreground">Shuffle until you find one you like.</span>
-              </div>
-            </div>
-            <Button
+          {/* Tab Selector */}
+          <div className="flex items-center gap-1 p-1 bg-muted/60 rounded-lg border border-border/70 select-none">
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleShuffleAvatar}
-              className="h-8 gap-1.5 text-xs"
+              onClick={() => setActiveTab("profile")}
+              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                activeTab === "profile"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <ShuffleIcon data-icon="inline-start" className="size-3.5" />
-              Shuffle
-            </Button>
+              Persona & Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("mcp")}
+              className={`flex-1 py-1 px-2.5 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === "mcp"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>MCP & Apps</span>
+              <span className="text-[10px] px-1 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-mono">
+                Safe
+              </span>
+            </button>
           </div>
 
-          {/* Form fields */}
-          <form id="create-bot-form" onSubmit={handleSubmit(onSubmit)}>
-            <FieldGroup className="gap-4">
-              <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="bot-name">Name</FieldLabel>
-                <Input
-                  id="bot-name"
-                  placeholder="Botato"
-                  aria-invalid={!!errors.name}
-                  {...register("name")}
-                />
-                <FieldError errors={[errors.name]} />
-              </Field>
+          {activeTab === "profile" ? (
+            <>
+              {/* Preset chips */}
+              <div className="flex flex-wrap items-center gap-2">
+                {BOT_PRESETS.map((preset) => {
+                  const isActive = activePreset === preset.label
+                  return (
+                    <Button
+                      key={preset.label}
+                      type="button"
+                      variant={isActive ? "secondary" : "outline"}
+                      size="sm"
+                      className="h-8 rounded-full text-xs font-normal"
+                      onClick={() => handleApplyPreset(preset)}
+                    >
+                      {preset.label}
+                    </Button>
+                  )
+                })}
+              </div>
 
-              <Field data-invalid={!!errors.job}>
-                <FieldLabel htmlFor="bot-job">Job</FieldLabel>
-                <Input
-                  id="bot-job"
-                  placeholder="Research assistant"
-                  aria-invalid={!!errors.job}
-                  {...register("job")}
-                />
-                <FieldError errors={[errors.job]} />
-              </Field>
+              {/* Face section */}
+              <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-background ring-1 ring-border shadow-xs">
+                    <ChatAvatar seed={avatar || "bot"} className="size-9" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium leading-none">Face</span>
+                    <span className="text-xs text-muted-foreground">Shuffle until you find one you like.</span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShuffleAvatar}
+                  className="h-8 gap-1.5 text-xs"
+                >
+                  <ShuffleIcon data-icon="inline-start" className="size-3.5" />
+                  Shuffle
+                </Button>
+              </div>
 
-              <Field data-invalid={!!errors.instructions}>
-                <FieldLabel htmlFor="bot-instructions">How it should work</FieldLabel>
-                <Textarea
-                  id="bot-instructions"
-                  rows={4}
-                  className="resize-none"
-                  placeholder="Answer briefly, cite sources, and ask before running anything destructive."
-                  aria-invalid={!!errors.instructions}
-                  {...register("instructions")}
-                />
-                <FieldError errors={[errors.instructions]} />
-              </Field>
-            </FieldGroup>
-          </form>
+              {/* Form fields */}
+              <form id="create-bot-form" onSubmit={handleSubmit(onSubmit)}>
+                <FieldGroup className="gap-4">
+                  <Field data-invalid={!!errors.name}>
+                    <FieldLabel htmlFor="bot-name">Name</FieldLabel>
+                    <Input
+                      id="bot-name"
+                      placeholder="Botato"
+                      aria-invalid={!!errors.name}
+                      {...register("name")}
+                    />
+                    <FieldError errors={[errors.name]} />
+                  </Field>
+
+                  <Field data-invalid={!!errors.job}>
+                    <FieldLabel htmlFor="bot-job">Job</FieldLabel>
+                    <Input
+                      id="bot-job"
+                      placeholder="Research assistant"
+                      aria-invalid={!!errors.job}
+                      {...register("job")}
+                    />
+                    <FieldError errors={[errors.job]} />
+                  </Field>
+
+                  <Field data-invalid={!!errors.instructions}>
+                    <FieldLabel htmlFor="bot-instructions">How it should work</FieldLabel>
+                    <Textarea
+                      id="bot-instructions"
+                      rows={4}
+                      className="resize-none"
+                      placeholder="Answer briefly, cite sources, and ask before running anything destructive."
+                      aria-invalid={!!errors.instructions}
+                      {...register("instructions")}
+                    />
+                    <FieldError errors={[errors.instructions]} />
+                  </Field>
+                </FieldGroup>
+              </form>
+            </>
+          ) : (
+            <div className="py-1">
+              <McpSettings
+                botId={initialBot?.id}
+                botName={initialBot?.name ?? watchName}
+              />
+            </div>
+          )}
 
           {/* Dialog Footer */}
           <DialogFooter className="mt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
-            {isEditing ? (
-              <Button
-                type="button"
-                variant="destructive"
-                className="w-full sm:w-auto"
-                onClick={() => setConfirmDeleteOpen(true)}
-                disabled={isSubmitting || isDeleting}
-              >
-                <Trash2Icon data-icon="inline-start" className="size-4" />
-                Delete bot
-              </Button>
+            {activeTab === "mcp" ? (
+              <div className="w-full flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Done
+                </Button>
+              </div>
             ) : (
-              <div className="hidden sm:block" />
-            )}
-            <div className="flex items-center gap-2 justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 sm:flex-initial"
-                onClick={() => setOpen(false)}
-                disabled={isSubmitting || isDeleting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="create-bot-form"
-                disabled={isSubmitting || isDeleting}
-                className="flex-1 sm:flex-initial"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Spinner data-icon="inline-start" />
-                    {isEditing ? "Saving..." : "Creating..."}
-                  </>
-                ) : isEditing ? (
-                  "Save changes"
+              <>
+                {isEditing ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                    onClick={() => setConfirmDeleteOpen(true)}
+                    disabled={isSubmitting || isDeleting}
+                  >
+                    <Trash2Icon data-icon="inline-start" className="size-4" />
+                    Delete bot
+                  </Button>
                 ) : (
-                  "Create bot"
+                  <div className="hidden sm:block" />
                 )}
-              </Button>
-            </div>
+                <div className="flex items-center gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 sm:flex-initial"
+                    onClick={() => setOpen(false)}
+                    disabled={isSubmitting || isDeleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    form="create-bot-form"
+                    disabled={isSubmitting || isDeleting}
+                    className="flex-1 sm:flex-initial"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Spinner data-icon="inline-start" />
+                        {isEditing ? "Saving..." : "Creating..."}
+                      </>
+                    ) : isEditing ? (
+                      "Save changes"
+                    ) : (
+                      "Create bot"
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
