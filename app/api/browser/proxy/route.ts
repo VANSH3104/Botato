@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { isPublicNetworkDestination } from "@/services/sandbox/src/security";
+import { isPublicNetworkDestination } from "@/lib/sandbox/security";
 
 export async function GET(req: NextRequest) {
   const { userId } = await auth();
