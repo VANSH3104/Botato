@@ -165,7 +165,7 @@ export function GroupChatDialog({
         })
         setIsDeleteDialogOpen(false)
         setOpen(false)
-        router.push("/")
+        router.push("/dashboard")
       }
     } catch (err) {
       console.error(err)

@@ -247,7 +247,7 @@ export function BotDialog({
           pathname === `/chats/${initialBot.id}` ||
           pathname.startsWith(`/chats/${initialBot.id}/`)
         ) {
-          router.push("/")
+          router.push("/dashboard")
         }
       }
     } catch (error) {

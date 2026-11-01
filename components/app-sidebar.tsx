@@ -51,7 +51,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
       <SidebarHeader className="p-0 gap-0">
         <div className="flex h-12 items-center justify-between px-3 border-b border-sidebar-border group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center gap-2 px-1 text-sm font-semibold tracking-tight text-sidebar-foreground hover:opacity-85 transition-opacity group-data-[collapsible=icon]:hidden"
           >
             <BotatoIcon className="size-5.5" />
