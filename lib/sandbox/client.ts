@@ -82,7 +82,7 @@ export class SandboxClient {
   }
 
   public async checkHealth(): Promise<SandboxHealth> {
-    return this.request<SandboxHealth>("/health", { timeoutMs: 5000 });
+    return this.request<SandboxHealth>("/health", { timeoutMs: 2500 });
   }
 
   public async createSandbox(options?: CreateSandboxOptions): Promise<SandboxInfo> {
