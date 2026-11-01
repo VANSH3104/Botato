@@ -1,0 +1,190 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 512" fill="none">
+  <defs>
+    <!-- Background -->
+    <radialGradient id="bg" cx="50%" cy="48%" r="70%">
+      <stop offset="0%" stop-color="#10104A"/>
+      <stop offset="100%" stop-color="#05051F"/>
+    </radialGradient>
+
+    <!-- Purple gradient -->
+    <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F0ABFC"/>
+      <stop offset="45%" stop-color="#C026D3"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+
+    <!-- Cyan gradient -->
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#A5F3FC"/>
+      <stop offset="45%" stop-color="#22D3EE"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <!-- Robot face gradients -->
+    <linearGradient id="facePurple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F5D0FE"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+
+    <linearGradient id="faceCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ECFEFF"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+
+    <!-- Bubble glass fills -->
+    <radialGradient id="purpleGlass" cx="30%" cy="20%" r="90%">
+      <stop offset="0%" stop-color="#E879F9" stop-opacity=".65"/>
+      <stop offset="60%" stop-color="#9333EA" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity=".15"/>
+    </radialGradient>
+
+    <radialGradient id="blueGlass" cx="65%" cy="20%" r="90%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity=".65"/>
+      <stop offset="60%" stop-color="#2563EB" stop-opacity=".25"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity=".15"/>
+    </radialGradient>
+
+    <!-- Glow filters -->
+    <filter id="purpleGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="blueGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="768" height="512" fill="url(#bg)"/>
+
+  <!-- Ambient glow -->
+  <ellipse cx="290" cy="225" rx="190" ry="150"
+           fill="#A855F7" opacity=".13" filter="url(#softGlow)"/>
+  <ellipse cx="490" cy="275" rx="190" ry="150"
+           fill="#06B6D4" opacity=".15" filter="url(#softGlow)"/>
+
+  <!-- Purple speech bubble -->
+  <path
+    d="M 298 74
+       C 388 74 430 120 430 194
+       C 430 273 373 314 277 314
+       C 242 314 216 309 192 300
+       L 153 343
+       L 170 277
+       C 130 248 120 214 120 177
+       C 120 111 190 74 298 74 Z"
+    fill="url(#purpleGlass)"
+    stroke="url(#purple)"
+    stroke-width="4"
+    stroke-linejoin="round"
+    filter="url(#purpleGlow)"
+  />
+
+  <!-- Purple bubble highlight -->
+  <path d="M 169 155 Q 180 130 203 119"
+        stroke="#F5D0FE" stroke-width="10"
+        stroke-linecap="round" opacity=".8"/>
+
+  <circle cx="155" cy="175" r="6" fill="#F5D0FE" opacity=".8"/>
+
+  <!-- Purple robot antenna -->
+  <path d="M 276 150 V 126"
+        stroke="url(#facePurple)" stroke-width="7"
+        stroke-linecap="round"/>
+  <circle cx="276" cy="117" r="14"
+          fill="url(#facePurple)" filter="url(#purpleGlow)"/>
+
+  <!-- Purple robot ears -->
+  <rect x="176" y="183" width="20" height="48" rx="10"
+        fill="url(#facePurple)"/>
+  <rect x="355" y="183" width="20" height="48" rx="10"
+        fill="url(#facePurple)"/>
+
+  <!-- Purple robot head -->
+  <rect x="192" y="150" width="166" height="110" rx="43"
+        fill="#130D3D" stroke="url(#facePurple)"
+        stroke-width="12" filter="url(#purpleGlow)"/>
+
+  <!-- Purple robot eyes -->
+  <path d="M 224 207 Q 241 182 258 207"
+        stroke="#F0ABFC" stroke-width="8"
+        stroke-linecap="round"/>
+  <path d="M 284 207 Q 301 182 318 207"
+        stroke="#F0ABFC" stroke-width="8"
+        stroke-linecap="round"/>
+
+  <!-- Blue speech bubble -->
+  <path
+    d="M 464 132
+       C 550 132 608 184 608 257
+       C 608 310 580 344 548 362
+       L 560 405
+       L 495 369
+       C 469 378 438 383 408 383
+       C 316 383 264 337 264 273
+       C 264 240 279 213 301 192
+       C 324 169 350 156 379 150
+       C 400 139 431 132 464 132 Z"
+    fill="url(#blueGlass)"
+    stroke="url(#cyan)"
+    stroke-width="5"
+    stroke-linejoin="round"
+    filter="url(#blueGlow)"
+  />
+
+  <!-- Blue robot antenna -->
+  <path d="M 487 202 V 180"
+        stroke="url(#faceCyan)" stroke-width="8"
+        stroke-linecap="round"/>
+  <circle cx="487" cy="170" r="14"
+          fill="url(#faceCyan)" filter="url(#blueGlow)"/>
+
+  <!-- Blue robot ears -->
+  <rect x="389" y="238" width="19" height="46" rx="9"
+        fill="url(#faceCyan)"/>
+  <rect x="558" y="238" width="19" height="46" rx="9"
+        fill="url(#faceCyan)"/>
+
+  <!-- Blue robot head -->
+  <rect x="403" y="207" width="164" height="103" rx="43"
+        fill="#071D46" stroke="url(#faceCyan)"
+        stroke-width="12" filter="url(#blueGlow)"/>
+
+  <!-- Blue robot eyes -->
+  <path d="M 436 260 Q 453 235 470 260"
+        stroke="#67E8F9" stroke-width="8"
+        stroke-linecap="round"/>
+  <path d="M 495 260 Q 512 235 529 260"
+        stroke="#67E8F9" stroke-width="8"
+        stroke-linecap="round"/>
+
+  <!-- Conversation dots -->
+  <circle cx="348" cy="335" r="9" fill="#E879F9"/>
+  <circle cx="380" cy="335" r="9" fill="#38BDF8"/>
+  <circle cx="412" cy="335" r="9" fill="#06B6D4"/>
+
+  <!-- Sparkles -->
+  <g stroke="url(#cyan)" stroke-width="8" stroke-linecap="round">
+    <path d="M 559 79 L 569 59"/>
+    <path d="M 590 102 L 611 88"/>
+    <path d="M 610 131 L 630 136"/>
+  </g>
+
+  <!-- Bottom ambient light -->
+  <ellipse cx="390" cy="445" rx="155" ry="10"
+           fill="#6366F1" opacity=".35"
+           filter="url(#softGlow)"/>
+</svg>
