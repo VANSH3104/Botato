@@ -17,25 +17,27 @@ import {
 import { SidebarHeaderActions } from "@/components/sidebar-header-actions"
 import { SidebarSearch } from "@/components/sidebar-search"
 import { SidebarChatList } from "@/components/sidebar-chat-list"
-import { getBots } from "@/queries/bots"
-import type { Bot } from "@/lib/db/schema"
+import { getBots, type BotWithLastChat } from "@/queries/bots"
 
 const USER_BUTTON_APPEARANCE = {
   elements: {
     rootBox:
       "w-full h-full self-stretch flex items-stretch group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center",
     userButtonTrigger:
-      "w-full h-full self-stretch flex items-center gap-2 p-2 rounded-md text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring outline-hidden cursor-pointer !max-w-none !shadow-none group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center",
+      "w-full h-full self-stretch flex flex-row-reverse justify-end items-center gap-2.5 p-2 rounded-md text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring outline-hidden cursor-pointer !max-w-none !shadow-none group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center",
     userButtonBox:
-      "w-full h-full flex items-center gap-2 flex-row group-data-[collapsible=icon]:justify-center",
+      "flex items-center gap-2.5 flex-row order-1 group-data-[collapsible=icon]:justify-center",
     userButtonAvatarBox: "size-8 shrink-0 rounded-full group-data-[collapsible=icon]:size-6",
     userButtonOuterIdentifier:
-      "text-sm font-medium text-sidebar-foreground truncate text-left flex-1 group-data-[collapsible=icon]:hidden",
+      "text-sm font-medium text-sidebar-foreground truncate text-left flex-1 group-data-[collapsible=icon]:hidden order-2",
+    userButtonPopoverFooter: "!hidden hidden",
+    footer: "!hidden hidden",
+    footerAction: "!hidden hidden",
   },
 } satisfies Parameters<typeof UserButton>[0]["appearance"]
 
 export interface AppSidebarProps {
-  bots?: Bot[]
+  bots?: BotWithLastChat[]
 }
 
 export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
@@ -45,7 +47,7 @@ export async function AppSidebar({ bots: initialBots }: AppSidebarProps = {}) {
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-col gap-2 p-2">
         <div className="flex flex-row items-center justify-end group-data-[collapsible=icon]:justify-center">
-          <SidebarHeaderActions />
+          <SidebarHeaderActions bots={bots.filter((b) => !b.isGroup)} />
         </div>
         <SidebarSearch bots={bots} />
       </SidebarHeader>

@@ -12,9 +12,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { BotDialog } from "@/components/bot-dialog"
+import { GroupChatDialog } from "@/components/group-chat-dialog"
+import type { Bot } from "@/lib/db/schema"
 
-export function SidebarHeaderActions() {
+export interface SidebarHeaderActionsProps {
+  bots?: Bot[]
+}
+
+export function SidebarHeaderActions({ bots = [] }: SidebarHeaderActionsProps) {
   const [botDialogOpen, setBotDialogOpen] = React.useState(false)
+  const [groupChatDialogOpen, setGroupChatDialogOpen] = React.useState(false)
 
   return (
     <>
@@ -33,11 +40,11 @@ export function SidebarHeaderActions() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setBotDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => setBotDialogOpen(true)} className="cursor-pointer">
               <PlusIcon />
               <span>Create new bot</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setGroupChatDialogOpen(true)} className="cursor-pointer">
               <UsersIcon />
               <span>Create group chat</span>
             </DropdownMenuItem>
@@ -46,6 +53,11 @@ export function SidebarHeaderActions() {
       </DropdownMenu>
 
       <BotDialog open={botDialogOpen} onOpenChange={setBotDialogOpen} />
+      <GroupChatDialog
+        open={groupChatDialogOpen}
+        onOpenChange={setGroupChatDialogOpen}
+        bots={bots}
+      />
     </>
   )
 }

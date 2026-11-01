@@ -15,11 +15,12 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { ChatAvatar } from "@/components/chat-avatar"
+import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { cn, formatChatDate } from "@/lib/utils"
-import type { Bot } from "@/lib/db/schema"
+import type { BotWithLastChat } from "@/queries/bots"
 
 export interface SidebarSearchProps {
-  bots?: (Bot & { lastChat?: string | null })[]
+  bots?: BotWithLastChat[]
   className?: string
 }
 
@@ -83,18 +84,26 @@ export function SidebarSearch({ bots = [], className }: SidebarSearchProps) {
                 }}
                 className="flex items-center gap-2.5 py-2 cursor-pointer"
               >
-                <ChatAvatar
-                  seed={bot.avatar}
-                  className="size-7 shrink-0 rounded-md"
-                />
+                {bot.isGroup ? (
+                  <GroupChatAvatar
+                    bots={bot.bots}
+                    seed={bot.avatar}
+                    className="size-7 shrink-0 rounded-md"
+                  />
+                ) : (
+                  <ChatAvatar
+                    seed={bot.avatar}
+                    className="size-7 shrink-0 rounded-md"
+                  />
+                )}
                 <div className="flex flex-1 flex-col min-w-0 text-left">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-medium text-foreground">
                       {bot.name}
                     </span>
-                    {bot.createdAt ? (
+                    {bot.lastChatAt || (bot.lastChat && bot.createdAt) ? (
                       <span className="shrink-0 text-xs text-muted-foreground font-normal">
-                        {formatChatDate(bot.createdAt)}
+                        {formatChatDate(bot.lastChatAt ?? bot.createdAt)}
                       </span>
                     ) : null}
                   </div>
