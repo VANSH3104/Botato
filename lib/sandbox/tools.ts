@@ -68,6 +68,14 @@ export function createSandboxTools(client: SandboxClient = defaultSandboxClient)
         timeoutSeconds?: number;
       }) => {
         try {
+          const trimmedLower = command.trim().toLowerCase();
+          if (trimmedLower.startsWith("consultbot") || trimmedLower.includes("consultbot")) {
+            return {
+              success: false,
+              error: "consultBot is a native AI tool, NOT a bash command! Do not run it in executeCommand. Call the consultBot tool directly.",
+            };
+          }
+
           const result = await client.executeCommand(sandboxId, {
             command,
             cwd,
@@ -208,7 +216,7 @@ export function createSandboxTools(client: SandboxClient = defaultSandboxClient)
           .describe("URL to navigate to (e.g. 'https://owasp.org') or search query (e.g. 'cyber security guide')."),
         sandboxId: z.string().optional().describe("Optional active sandbox ID."),
       }),
-      execute: async ({ url, sandboxId: _sandboxId }: { url: string; sandboxId?: string }) => {
+      execute: async ({ url }: { url: string; sandboxId?: string }) => {
         try {
           let targetUrl = url.trim();
           if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
