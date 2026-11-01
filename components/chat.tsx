@@ -16,10 +16,17 @@ import {
   PromptInputTextarea,
   PromptInputSubmit,
   PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectTrigger,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectValue,
 } from "@/components/ai-elements/prompt-input"
 import { ChatAvatar } from "@/components/chat-avatar"
+import { GroupChatAvatar } from "@/components/group-chat-avatar"
 import { Spinner } from "@/components/ui/spinner"
 import { Terminal, ExternalLink, ChevronDown } from "lucide-react"
+import { extractSnippetFromMessage } from "@/lib/utils"
 import type { UIMessage } from "ai"
 import type { Chat as ChatData } from "@/chats/queries"
 
@@ -39,6 +46,161 @@ export interface ParsedToolStep {
   tab?: "terminal" | "files" | "browser"
   url?: string
   outputPreview?: string
+}
+
+export interface AssistantSegment {
+  key: string
+  bot?: { id: string; name: string; avatar: string; job?: string | null }
+  text: string
+  isFirst: boolean
+  isLast: boolean
+}
+
+function extractBotFromText(
+  text: string,
+  botsList: Array<{ id: string; name: string; avatar: string; job?: string | null }>
+): {
+  bot?: { id: string; name: string; avatar: string; job?: string | null }
+  cleanText: string
+} {
+  const match = text.match(/<!--bot:([^>]+)-->/)
+  if (match) {
+    const rawIdOrName = match[1].trim()
+    const matchedBot = botsList.find(
+      (b) => b.id === rawIdOrName || b.name.toLowerCase() === rawIdOrName.toLowerCase()
+    )
+    const cleanText = text.replace(/<!--bot:[^>]+-->\s*/, "")
+    return { bot: matchedBot, cleanText }
+  }
+
+  for (const b of botsList) {
+    const escaped = b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const prefixRegex = new RegExp(`^(?:\\[${escaped}\\]|\\*\\*${escaped}\\*\\*|${escaped}:)\\s*`, "i")
+    if (prefixRegex.test(text)) {
+      return { bot: b, cleanText: text.replace(prefixRegex, "") }
+    }
+  }
+
+  // Check introductory patterns (e.g. "I'm vvv —" or "I am vvv" or "This is vvv")
+  for (const b of botsList) {
+    const escaped = b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const introRegex = new RegExp(`^(?:I['’]m|I\\s+am|This\\s+is)\\s+${escaped}\\b`, "i")
+    if (introRegex.test(text.trim())) {
+      return { bot: b, cleanText: text }
+    }
+  }
+
+  return { bot: undefined, cleanText: text }
+}
+
+function parseAssistantMessageSegments(
+  fullText: string,
+  botsList: Array<{ id: string; name: string; avatar: string; job?: string | null }>,
+  fallbackBot?: { id: string; name: string; avatar: string; job?: string | null }
+): AssistantSegment[] {
+  if (!fullText.trim()) {
+    return [
+      {
+        key: "seg-0",
+        bot: fallbackBot,
+        text: "",
+        isFirst: true,
+        isLast: true,
+      },
+    ]
+  }
+
+  // 1. Check for <!--bot:BOT_ID--> tags
+  const botTagRegex = /<!--bot:([^>]+)-->/g
+  const matches = Array.from(fullText.matchAll(botTagRegex))
+
+  if (matches.length > 0) {
+    const segments: AssistantSegment[] = []
+    for (let i = 0; i < matches.length; i++) {
+      const match = matches[i]
+      const nextMatch = matches[i + 1]
+      const botIdOrName = match[1].trim()
+      const matchedBot = botsList.find(
+        (b) => b.id === botIdOrName || b.name.toLowerCase() === botIdOrName.toLowerCase()
+      ) ?? fallbackBot
+
+      const startIdx = match.index! + match[0].length
+      const endIdx = nextMatch ? nextMatch.index! : fullText.length
+      let rawSegmentText = fullText.slice(startIdx, endIdx).trim()
+
+      if (matchedBot) {
+        const esc = matchedBot.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        rawSegmentText = rawSegmentText.replace(
+          new RegExp(`^(?:\\[${esc}\\]|\\*\\*${esc}\\*\\*|${esc}:)\\s*`, "i"),
+          ""
+        )
+      }
+
+      segments.push({
+        key: `seg-${i}-${matchedBot?.id || i}`,
+        bot: matchedBot,
+        text: rawSegmentText,
+        isFirst: i === 0,
+        isLast: i === matches.length - 1,
+      })
+    }
+    return segments
+  }
+
+  // 2. Check for markdown headers like [BotName]: or **BotName**: or ### BotName:
+  // if text has at least 2 distinct bot occurrences
+  const foundBotIndices: Array<{
+    bot: (typeof botsList)[number]
+    index: number
+    matchLength: number
+  }> = []
+
+  for (const b of botsList) {
+    const esc = b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const headerRegex = new RegExp(`(?:^|\\n\\n)(?:\\[${esc}\\]|\\*\\*${esc}\\*\\*|#{1,4}\\s+${esc}(?:'s)?(?::|\\s+Summary|\\s+Response)?)(?::)?\\s*`, "gi")
+    let m: RegExpExecArray | null
+    while ((m = headerRegex.exec(fullText)) !== null) {
+      foundBotIndices.push({
+        bot: b,
+        index: m.index,
+        matchLength: m[0].length,
+      })
+    }
+  }
+
+  foundBotIndices.sort((a, b) => a.index - b.index)
+
+  if (foundBotIndices.length > 1) {
+    const segments: AssistantSegment[] = []
+    for (let i = 0; i < foundBotIndices.length; i++) {
+      const current = foundBotIndices[i]
+      const next = foundBotIndices[i + 1]
+      const startIdx = current.index + current.matchLength
+      const endIdx = next ? next.index : fullText.length
+      const segText = fullText.slice(startIdx, endIdx).trim()
+
+      segments.push({
+        key: `seg-md-${i}-${current.bot.id}`,
+        bot: current.bot,
+        text: segText,
+        isFirst: i === 0,
+        isLast: i === foundBotIndices.length - 1,
+      })
+    }
+    return segments
+  }
+
+  // Default: single segment
+  const { bot: detectedBot, cleanText } = extractBotFromText(fullText, botsList)
+  return [
+    {
+      key: "seg-default",
+      bot: detectedBot ?? fallbackBot,
+      text: cleanText,
+      isFirst: true,
+      isLast: true,
+    },
+  ]
 }
 
 function parseMessageToolSteps(parts: unknown[] = []): ParsedToolStep[] {
@@ -106,6 +268,10 @@ function parseMessageToolSteps(parts: unknown[] = []): ParsedToolStep[] {
     } else if (toolName === "terminateSandbox") {
       tab = "terminal"
       label = "Terminated sandbox environment"
+    } else if (toolName === "consultBot") {
+      tab = undefined
+      label = `Consulted @${(args?.botName as string) || "peer bot"}`
+      detail = (args?.query as string) || ""
     }
 
     let statusType: "running" | "completed" | "error" = "running"
@@ -126,6 +292,8 @@ function parseMessageToolSteps(parts: unknown[] = []): ParsedToolStep[] {
         outputPreview = outObj.stdout.trim()
       } else if (typeof outObj.summary === "string" && outObj.summary.trim()) {
         outputPreview = outObj.summary.trim()
+      } else if (typeof outObj.response === "string" && outObj.response.trim()) {
+        outputPreview = outObj.response.trim()
       } else if (typeof outObj.error === "string" && outObj.error.trim()) {
         outputPreview = outObj.error.trim()
       } else if (typeof outObj.stderr === "string" && outObj.stderr.trim()) {
@@ -181,13 +349,33 @@ function parseToolPart(rawPart: unknown) {
 }
 
 export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatProps) {
-  const targetBot = chat.bots?.[0] ?? chat.bot
+  const [selectedBotId, setSelectedBotId] = React.useState<string>(() => {
+    return chat.bots?.[0]?.id ?? chat.bot?.id ?? ""
+  })
+
+  const targetBot = React.useMemo(() => {
+    if (chat.isGroup && chat.bots && chat.bots.length > 0) {
+      return chat.bots.find((b) => b.id === selectedBotId) ?? chat.bots[0]
+    }
+    return chat.bots?.[0] ?? chat.bot
+  }, [chat, selectedBotId])
+
   const transport = useTriggerChatTransport<typeof chatAgent>({
     task: "chat-agent",
     clientData: {
+      isGroup: Boolean(chat.isGroup),
+      groupName: chat.isGroup ? chat.name : undefined,
+      selectedBotId: targetBot?.id,
       botName: targetBot?.name ?? chat.name,
       botJob: targetBot?.job ?? undefined,
       botInstructions: targetBot?.instructions ?? undefined,
+      bots: chat.bots?.map((b) => ({
+        id: b.id,
+        name: b.name,
+        avatar: b.avatar,
+        job: b.job,
+        instructions: b.instructions,
+      })),
     },
     accessToken: ({ chatId: id }) => mintChatAccessToken(id),
     startSession: ({ chatId: id, clientData }) =>
@@ -195,9 +383,19 @@ export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatPro
         chatId: id,
         clientData: {
           ...(clientData as Record<string, unknown>),
+          isGroup: Boolean(chat.isGroup),
+          groupName: chat.isGroup ? chat.name : undefined,
+          selectedBotId: targetBot?.id,
           botName: targetBot?.name ?? chat.name,
           botJob: targetBot?.job ?? undefined,
           botInstructions: targetBot?.instructions ?? undefined,
+          bots: chat.bots?.map((b) => ({
+            id: b.id,
+            name: b.name,
+            avatar: b.avatar,
+            job: b.job,
+            instructions: b.instructions,
+          })),
         },
       }),
   })
@@ -208,27 +406,24 @@ export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatPro
     { transport }
   )
 
-  const [cachedMessages, setCachedMessages] = React.useState<UIMessage[]>([])
-  const [hasCheckedCache, setHasCheckedCache] = React.useState(false)
-
-  React.useEffect(() => {
+  const [cachedMessages] = React.useState<UIMessage[]>(() => {
     try {
       if (typeof window !== "undefined") {
         const stored = window.localStorage.getItem(`botato_chat_${chatId}`)
         if (stored) {
           const parsed = JSON.parse(stored)
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCachedMessages(parsed)
+            return parsed
           }
         }
       }
     } catch {
       // ignore storage errors
     }
-    setHasCheckedCache(true)
-  }, [chatId])
+    return []
+  })
 
-  if (isLoading && !hasCheckedCache) {
+  if (isLoading && cachedMessages.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center h-full gap-2 text-muted-foreground">
         <Spinner className="size-6" />
@@ -249,6 +444,8 @@ export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatPro
       chat={chat}
       transport={transport}
       initialMessages={effectiveInitialMessages}
+      selectedBotId={selectedBotId}
+      setSelectedBotId={setSelectedBotId}
       onSandboxActivity={onSandboxActivity}
       onOpenDesktop={onOpenDesktop}
     />
@@ -260,6 +457,8 @@ function ChatInner({
   chat,
   transport,
   initialMessages,
+  selectedBotId,
+  setSelectedBotId,
   onSandboxActivity,
   onOpenDesktop,
 }: {
@@ -267,13 +466,112 @@ function ChatInner({
   chat: ChatData
   transport: ReturnType<typeof useTriggerChatTransport<typeof chatAgent>>
   initialMessages: UIMessage[]
+  selectedBotId: string
+  setSelectedBotId: (id: string) => void
   onSandboxActivity?: (tab?: "terminal" | "files" | "browser", url?: string) => void
   onOpenDesktop?: (tab?: "terminal" | "files" | "browser", url?: string) => void
 }) {
   const [input, setInput] = React.useState("")
+  const [mentionQuery, setMentionQuery] = React.useState<string | null>(null)
+  const [mentionIndex, setMentionIndex] = React.useState(0)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const isNearBottomRef = React.useRef(true)
   const bot = chat.bots?.[0] ?? chat.bot
+  const targetBot = React.useMemo(() => {
+    if (chat.isGroup && chat.bots && chat.bots.length > 0) {
+      return chat.bots.find((b) => b.id === selectedBotId) ?? chat.bots[0]
+    }
+    return chat.bots?.[0] ?? chat.bot
+  }, [chat, selectedBotId])
+
+  const matchingBots = React.useMemo(() => {
+    if (!chat.isGroup || !chat.bots || mentionQuery === null) return []
+    const q = mentionQuery.toLowerCase().trim()
+    if (!q) return chat.bots
+    return chat.bots.filter(
+      (b) =>
+        b.name.toLowerCase().includes(q) ||
+        (b.job && b.job.toLowerCase().includes(q))
+    )
+  }, [chat.isGroup, chat.bots, mentionQuery])
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.currentTarget.value
+    setInput(val)
+
+    if (!chat.isGroup || !chat.bots || chat.bots.length === 0) {
+      setMentionQuery(null)
+      return
+    }
+
+    const cursorPos = e.currentTarget.selectionEnd ?? val.length
+    const textBeforeCursor = val.slice(0, cursorPos)
+    const match = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_\-\s]{0,20})$/)
+
+    if (match) {
+      setMentionQuery(match[1])
+      setMentionIndex(0)
+    } else {
+      setMentionQuery(null)
+    }
+  }
+
+  const selectMention = (botToMention: { id: string; name: string }) => {
+    const el = textareaRef.current
+    const cursorPos = el?.selectionEnd ?? input.length
+    const textBeforeCursor = input.slice(0, cursorPos)
+    const textAfterCursor = input.slice(cursorPos)
+
+    const replacedBefore = textBeforeCursor.replace(
+      /(?:^|\s)@([a-zA-Z0-9_\-\s]{0,20})$/,
+      (m) => {
+        const leadingSpace = m.startsWith(" ") ? " " : ""
+        return `${leadingSpace}@${botToMention.name} `
+      }
+    )
+
+    const nextVal = replacedBefore + textAfterCursor
+    setInput(nextVal)
+    setSelectedBotId(botToMention.id)
+    setMentionQuery(null)
+
+    setTimeout(() => {
+      if (el) {
+        el.focus()
+        const nextPos = replacedBefore.length
+        el.setSelectionRange(nextPos, nextPos)
+      }
+    }, 10)
+  }
+
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (mentionQuery !== null && matchingBots.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        setMentionIndex((prev) => (prev + 1) % matchingBots.length)
+        return
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault()
+        setMentionIndex((prev) => (prev - 1 + matchingBots.length) % matchingBots.length)
+        return
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        const chosen = matchingBots[mentionIndex] ?? matchingBots[0]
+        if (chosen) {
+          e.preventDefault()
+          selectMention(chosen)
+          return
+        }
+      }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        setMentionQuery(null)
+        return
+      }
+    }
+  }
 
   const { messages, sendMessage, stop, status } = useChat({
     id: chatId,
@@ -283,15 +581,47 @@ function ChatInner({
   })
 
   // Synchronize messages to local cache so conversation history is never lost on reload
+  const prevMessagesLengthRef = React.useRef(messages.length)
+  const isInitialMountRef = React.useRef(true)
+
   React.useEffect(() => {
-    if (messages.length > 0) {
-      try {
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(`botato_chat_${chatId}`, JSON.stringify(messages))
+    if (messages.length === 0) return
+
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(`botato_chat_${chatId}`, JSON.stringify(messages))
+
+        const isNewMessage =
+          !isInitialMountRef.current && messages.length > prevMessagesLengthRef.current
+        prevMessagesLengthRef.current = messages.length
+        isInitialMountRef.current = false
+
+        // ONLY broadcast a timestamp update if a new message was actually sent or received during this session
+        if (isNewMessage) {
+          const lastMsg = messages[messages.length - 1]
+          const snippet = extractSnippetFromMessage(lastMsg)
+          const rawTime =
+            lastMsg && typeof lastMsg === "object" && "createdAt" in lastMsg && lastMsg.createdAt
+              ? (lastMsg as { createdAt?: Date | string }).createdAt
+              : new Date()
+          const lastChatAt =
+            rawTime instanceof Date
+              ? rawTime.toISOString()
+              : typeof rawTime === "string"
+              ? rawTime
+              : new Date().toISOString()
+
+          if (snippet) {
+            window.dispatchEvent(
+              new CustomEvent("botato_chat_updated", {
+                detail: { chatId, lastChat: snippet, lastChatAt },
+              })
+            )
+          }
         }
-      } catch {
-        // ignore storage errors
       }
+    } catch {
+      // ignore storage errors
     }
   }, [chatId, messages])
 
@@ -337,6 +667,17 @@ function ChatInner({
 
   const handleSubmit = (message: PromptInputMessage) => {
     if (message.text.trim()) {
+      if (chat.isGroup && chat.bots) {
+        for (const b of chat.bots) {
+          const nameClean = b.name.trim().toLowerCase()
+          const regex = new RegExp(`@${b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\b|\\s|:|,|$)`, "i")
+          if (regex.test(message.text) || message.text.toLowerCase().includes(`@${nameClean}`)) {
+            setSelectedBotId(b.id)
+            break
+          }
+        }
+      }
+      setMentionQuery(null)
       sendMessage({ text: message.text })
       setInput("")
       // Ensure we jump to bottom when user submits
@@ -361,22 +702,42 @@ function ChatInner({
         >
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center gap-3">
-              <ChatAvatar
-                seed={bot?.avatar ?? chat.avatar}
-                className="size-16 rounded-2xl shadow-sm mb-2 border border-border/60"
-              />
-              <h2 className="text-lg font-semibold text-foreground">
-                Chat with {bot?.name ?? chat.name}
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                {bot?.instructions?.trim() ||
-                  bot?.job?.trim() ||
-                  "Ask anything to begin the conversation."}
-              </p>
+              {chat.isGroup ? (
+                <>
+                  <GroupChatAvatar
+                    bots={chat.bots ?? []}
+                    seed={chat.avatar}
+                    className="size-16 rounded-2xl shadow-sm mb-2 border border-border/60 p-1 bg-muted/40"
+                  />
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {chat.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    {chat.bots && chat.bots.length > 0
+                      ? chat.bots.map((b) => `${b.name} (${b.job || "Member"})`).join(" • ")
+                      : "Group Chat"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <ChatAvatar
+                    seed={bot?.avatar ?? chat.avatar}
+                    className="size-16 rounded-2xl shadow-sm mb-2 border border-border/60"
+                  />
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Chat with {bot?.name ?? chat.name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    {bot?.instructions?.trim() ||
+                      bot?.job?.trim() ||
+                      "Ask anything to begin the conversation."}
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <>
-              {messages.map((message) => {
+              {messages.map((message, msgIndex) => {
                 const isUser = message.role === "user"
                 const hasText = message.parts.some((p) => p.type === "text" && p.text?.trim())
                 const toolSteps = !isUser ? parseMessageToolSteps(message.parts) : []
@@ -404,130 +765,190 @@ function ChatInner({
                   )
                 }
 
+                const fullAssistantText = message.parts
+                  .filter((p) => p.type === "text" && typeof p.text === "string")
+                  .map((p) => (p as { text: string }).text)
+                  .join("\n\n")
+
+                // If not explicitly detected from text, check preceding user message to see who was tagged
+                let userMentionedBot: typeof targetBot | undefined = undefined
+                if (chat.isGroup && chat.bots) {
+                  for (let k = msgIndex - 1; k >= 0; k--) {
+                    if (messages[k].role === "user") {
+                      const uText = messages[k].parts
+                        .filter((p) => p.type === "text" && typeof p.text === "string")
+                        .map((p) => (p as { text: string }).text)
+                        .join(" ")
+                      for (const b of chat.bots) {
+                        const escaped = b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                        const r = new RegExp(`@${escaped}(?:\\b|\\s|:|,|$)`, "i")
+                        if (r.test(uText) || uText.toLowerCase().includes(`@${b.name.toLowerCase().trim()}`)) {
+                          userMentionedBot = b
+                          break
+                        }
+                      }
+                      break
+                    }
+                  }
+                }
+
+                const fallbackBot = userMentionedBot ?? (chat.isGroup ? targetBot : (bot ?? chat.bot))
+                const segments = parseAssistantMessageSegments(
+                  fullAssistantText,
+                  chat.bots || [],
+                  fallbackBot
+                )
+
                 return (
-                  <div
-                    key={message.id}
-                    className="flex items-start gap-3 w-full"
-                  >
-                    <ChatAvatar
-                      seed={bot?.avatar ?? chat.avatar}
-                      className="size-8 shrink-0 rounded-lg mt-0.5"
-                    />
-                    <div className="flex-1 min-w-0 text-sm text-foreground leading-relaxed break-words pt-1 space-y-2">
-                      {/* Collapsible Steps & Sandbox Activity */}
-                      {toolSteps.length > 0 && (
-                        <details
-                          className="group/steps my-2 rounded-xl border border-border/70 bg-card/60 shadow-xs overflow-hidden transition-all"
-                          open={isBusy}
+                  <React.Fragment key={message.id}>
+                    {segments.map((segment) => {
+                      const msgBot = segment.bot ?? fallbackBot
+                      return (
+                        <div
+                          key={`${message.id}-${segment.key}`}
+                          className="flex items-start gap-3 w-full"
                         >
-                          <summary className="flex items-center justify-between px-3 py-2 cursor-pointer list-none select-none hover:bg-muted/40 transition-colors">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <Terminal className="size-3.5 text-primary shrink-0" />
-                              <span className="text-xs font-medium text-foreground truncate">
-                                Sandbox Steps & Activity
-                              </span>
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
-                                {toolSteps.length} step{toolSteps.length > 1 ? "s" : ""}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground text-[11px]">
-                              <span className="group-open/steps:hidden">Show steps</span>
-                              <span className="hidden group-open/steps:inline">Hide steps</span>
-                              <ChevronDown className="size-3.5 transition-transform duration-200 group-open/steps:rotate-180" />
-                            </div>
-                          </summary>
-
-                          <div className="px-3 pb-2.5 pt-1 border-t border-border/50 space-y-2 bg-muted/20">
-                            {toolSteps.map((step) => (
-                              <div
-                                key={step.id}
-                                className="rounded-lg border border-border/60 bg-background/90 p-2 text-xs space-y-1.5 shadow-2xs"
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    {step.state === "running" ? (
-                                      <span className="size-2 rounded-full bg-primary animate-ping shrink-0" />
-                                    ) : step.state === "error" ? (
-                                      <span className="size-2 rounded-full bg-destructive shrink-0" />
-                                    ) : (
-                                      <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
-                                    )}
-                                    <span className="font-medium text-foreground truncate">
-                                      {step.label}
-                                    </span>
-                                  </div>
-
-                                  {step.tab && onOpenDesktop && (
-                                    <button
-                                      type="button"
-                                      onClick={() => onOpenDesktop(step.tab, step.url)}
-                                      className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-mono shrink-0 cursor-pointer"
-                                      title="View in sandbox desktop"
-                                    >
-                                      <span>View</span>
-                                      <ExternalLink className="size-3" />
-                                    </button>
-                                  )}
-                                </div>
-
-                                {step.detail && (
-                                  <div className="font-mono text-[11px] text-muted-foreground bg-muted/40 px-2 py-1 rounded border border-border/40 truncate">
-                                    {step.detail}
-                                  </div>
-                                )}
-
-                                {step.outputPreview && (
-                                  <pre className="font-mono text-[10px] text-muted-foreground bg-muted/60 p-2 rounded border border-border/40 max-h-36 overflow-y-auto whitespace-pre-wrap break-all">
-                                    {step.outputPreview}
-                                  </pre>
+                          <ChatAvatar
+                            seed={msgBot?.avatar ?? bot?.avatar ?? chat.avatar}
+                            className="size-8 shrink-0 rounded-lg mt-0.5"
+                          />
+                          <div className="flex-1 min-w-0 text-sm text-foreground leading-relaxed break-words pt-1 space-y-2">
+                            {chat.isGroup && msgBot && (
+                              <div className="flex items-center gap-1.5 pb-0.5 select-none">
+                                <span className="font-semibold text-xs text-foreground">{msgBot.name}</span>
+                                {msgBot.job && (
+                                  <span className="text-[10px] text-muted-foreground">({msgBot.job})</span>
                                 )}
                               </div>
-                            ))}
+                            )}
+
+                            {/* Collapsible Steps & Sandbox Activity */}
+                            {segment.isFirst && toolSteps.length > 0 && (
+                              <details className="group/steps my-2 rounded-xl border border-border/70 bg-card/60 shadow-xs overflow-hidden transition-all">
+                                <summary className="flex items-center justify-between px-3 py-2 cursor-pointer list-none select-none hover:bg-muted/40 transition-colors">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Terminal className="size-3.5 text-primary shrink-0" />
+                                    <span className="text-xs font-medium text-foreground truncate">
+                                      Sandbox Steps & Activity
+                                    </span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+                                      {toolSteps.length} step{toolSteps.length > 1 ? "s" : ""}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground text-[11px]">
+                                    <span className="group-open/steps:hidden">Show steps</span>
+                                    <span className="hidden group-open/steps:inline">Hide steps</span>
+                                    <ChevronDown className="size-3.5 transition-transform duration-200 group-open/steps:rotate-180" />
+                                  </div>
+                                </summary>
+
+                                <div className="px-3 pb-2.5 pt-1 border-t border-border/50 space-y-2 bg-muted/20">
+                                  {toolSteps.map((step) => (
+                                    <div
+                                      key={step.id}
+                                      className="rounded-lg border border-border/60 bg-background/90 p-2 text-xs space-y-1.5 shadow-2xs"
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          {step.state === "running" ? (
+                                            <span className="size-2 rounded-full bg-primary animate-ping shrink-0" />
+                                          ) : step.state === "error" ? (
+                                            <span className="size-2 rounded-full bg-destructive shrink-0" />
+                                          ) : (
+                                            <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                                          )}
+                                          <span className="font-medium text-foreground truncate">
+                                            {step.label}
+                                          </span>
+                                        </div>
+
+                                        {step.tab === "browser" && onOpenDesktop && (
+                                          <button
+                                            type="button"
+                                            onClick={() => onOpenDesktop("browser", step.url)}
+                                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-mono shrink-0 cursor-pointer"
+                                            title="View in live browser"
+                                          >
+                                            <span>View</span>
+                                            <ExternalLink className="size-3" />
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {step.detail && (
+                                        <div className="font-mono text-[11px] text-muted-foreground bg-muted/40 px-2 py-1 rounded border border-border/40 truncate">
+                                          {step.detail}
+                                        </div>
+                                      )}
+
+                                      {step.outputPreview && (
+                                        <pre className="font-mono text-[10px] text-muted-foreground bg-muted/60 p-2 rounded border border-border/40 max-h-36 overflow-y-auto whitespace-pre-wrap break-all">
+                                          {step.outputPreview}
+                                        </pre>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
+
+                            {segment.text && (
+                              <MessageResponse>
+                                {segment.text}
+                              </MessageResponse>
+                            )}
+
+                            {isBusy && segment.isLast && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                                <span className="size-2 rounded-full bg-primary/70 animate-ping" />
+                                <span>
+                                  {toolSteps.some((s) => s.state === "running")
+                                    ? `Working in sandbox: ${toolSteps.find((s) => s.state === "running")?.label}...`
+                                    : hasText
+                                    ? "Finalizing response..."
+                                    : "Checking sandbox & gathering details..."}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        </details>
-                      )}
-
-                      {message.parts.map((part, i) => {
-                        if (part.type === "text") {
-                          return (
-                            <MessageResponse key={`${message.id}-${i}`}>
-                              {part.text}
-                            </MessageResponse>
-                          )
-                        }
-                        return null
-                      })}
-
-                      {isBusy && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
-                          <span className="size-2 rounded-full bg-primary/70 animate-ping" />
-                          <span>
-                            {toolSteps.some((s) => s.state === "running")
-                              ? `Working in sandbox: ${toolSteps.find((s) => s.state === "running")?.label}...`
-                              : hasText
-                              ? "Finalizing response..."
-                              : "Checking sandbox & gathering details..."}
-                          </span>
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      )
+                    })}
+                  </React.Fragment>
                 )
               })}
 
-              {(status === "submitted" || status === "streaming") && messages[messages.length - 1]?.role === "user" && (
-                <div className="flex items-start gap-3 w-full">
-                  <ChatAvatar
-                    seed={bot?.avatar ?? chat.avatar}
-                    className="size-8 shrink-0 rounded-lg mt-0.5"
-                  />
-                  <div className="flex items-center gap-1.5 pt-2 text-muted-foreground">
-                    <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
-                    <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
-                    <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce" />
+              {(status === "submitted" || status === "streaming") && messages[messages.length - 1]?.role === "user" && (() => {
+                const lastUser = messages[messages.length - 1]
+                let indicatorBot = targetBot
+                if (chat.isGroup && chat.bots) {
+                  const uText = lastUser.parts
+                    .filter((p) => p.type === "text" && typeof p.text === "string")
+                    .map((p) => (p as { text: string }).text)
+                    .join(" ")
+                  for (const b of chat.bots) {
+                    const escaped = b.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                    const r = new RegExp(`@${escaped}(?:\\b|\\s|:|,|$)`, "i")
+                    if (r.test(uText) || uText.toLowerCase().includes(`@${b.name.toLowerCase().trim()}`)) {
+                      indicatorBot = b
+                      break
+                    }
+                  }
+                }
+                return (
+                  <div className="flex items-start gap-3 w-full">
+                    <ChatAvatar
+                      seed={indicatorBot?.avatar ?? bot?.avatar ?? chat.avatar}
+                      className="size-8 shrink-0 rounded-lg mt-0.5"
+                    />
+                    <div className="flex items-center gap-1.5 pt-2 text-muted-foreground">
+                      <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                      <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                      <span className="size-2 rounded-full bg-muted-foreground/60 animate-bounce" />
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </>
           )}
         </div>
@@ -535,18 +956,143 @@ function ChatInner({
 
       {/* Pinned prompt input bar at the bottom */}
       <div className="p-4 bg-background border-t border-border shrink-0">
-        <div className="max-w-2xl mx-auto w-full">
+        <div className="max-w-2xl mx-auto w-full relative">
+          {/* Interactive @ Mention Autocomplete Popup */}
+          {chat.isGroup && mentionQuery !== null && matchingBots.length > 0 && (
+            <div className="absolute bottom-[calc(100%+8px)] left-0 w-80 max-w-[calc(100vw-2rem)] z-50 rounded-2xl border border-border bg-popover shadow-2xl p-1.5 animate-in fade-in-0 zoom-in-95 select-none">
+              <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between border-b border-border/50 mb-1">
+                <span className="text-primary font-bold">Mention Bot</span>
+                <span className="text-[10px] font-mono text-muted-foreground/80 lowercase">
+                  ↑↓ select • ↵ / Tab insert
+                </span>
+              </div>
+              <div className="max-h-52 overflow-y-auto space-y-0.5">
+                {matchingBots.map((b, idx) => {
+                  const isSelected = idx === mentionIndex
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        selectMention(b)
+                      }}
+                      onMouseEnter={() => setMentionIndex(idx)}
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs transition-colors cursor-pointer select-none ${
+                        isSelected
+                          ? "bg-accent text-accent-foreground shadow-2xs"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                      }`}
+                    >
+                      <ChatAvatar seed={b.avatar} className="size-6 rounded-lg shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="font-semibold text-foreground">@{b.name}</span>
+                          {b.id === selectedBotId && (
+                            <span className="text-[10px] text-primary font-medium bg-primary/10 px-1.5 py-0.2 rounded-full">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        {b.job && (
+                          <div className="text-[11px] text-muted-foreground line-clamp-1">
+                            {b.job}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <PromptInput onSubmit={handleSubmit}>
             <PromptInputTextarea
+              ref={textareaRef}
               value={input}
-              placeholder={`Message ${bot?.name ?? chat.name}...`}
-              onChange={(e) => setInput(e.currentTarget.value)}
+              placeholder={
+                chat.isGroup
+                  ? `Message @${targetBot?.name || "bot"} (type @ to mention)...`
+                  : `Message ${bot?.name ?? chat.name}...`
+              }
+              onChange={handleInputChange}
+              onKeyDown={handleTextareaKeyDown}
               className="min-h-[56px] text-sm py-3 px-3.5"
             />
-            <PromptInputFooter className="px-3 pb-2.5 pt-1">
-              <div className="text-xs text-muted-foreground">
-                Press Enter to send, Shift+Enter for new line
-              </div>
+            <PromptInputFooter className="px-3 pb-2.5 pt-1 flex items-center justify-between">
+              {chat.isGroup && chat.bots && chat.bots.length > 0 ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">Bot:</span>
+                  <PromptInputSelect
+                    value={selectedBotId}
+                    onValueChange={(val) => {
+                      if (typeof val === "string") setSelectedBotId(val)
+                    }}
+                  >
+                    <PromptInputSelectTrigger className="h-7.5 w-auto gap-1.5 px-2.5 text-xs rounded-lg border border-border/70 bg-muted/30 hover:bg-muted/70 transition-colors shadow-2xs">
+                      <PromptInputSelectValue placeholder="Select bot">
+                        {targetBot && (
+                          <span className="flex items-center gap-1.5 font-medium text-foreground">
+                            <ChatAvatar seed={targetBot.avatar} className="size-4 rounded-md" />
+                            <span>{targetBot.name}</span>
+                          </span>
+                        )}
+                      </PromptInputSelectValue>
+                    </PromptInputSelectTrigger>
+                    <PromptInputSelectContent
+                      align="start"
+                      side="top"
+                      sideOffset={8}
+                      alignItemWithTrigger={false}
+                      className="w-[300px] min-w-[280px] max-w-[calc(100vw-2rem)] p-1.5 rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl z-50"
+                    >
+                      <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50 mb-1 flex items-center justify-between">
+                        <span>Group Member Bots</span>
+                        <span className="text-[10px] font-normal normal-case text-muted-foreground/80">
+                          type @ to tag
+                        </span>
+                      </div>
+                      {chat.bots.map((b) => {
+                        const isSelected = b.id === selectedBotId
+                        return (
+                          <PromptInputSelectItem
+                            key={b.id}
+                            value={b.id}
+                            indicator={false}
+                            className="cursor-pointer py-2 px-2.5 rounded-xl hover:bg-muted/80 data-[highlighted]:bg-muted transition-colors my-0.5"
+                          >
+                            <div className="flex items-start gap-2.5 w-full text-left">
+                              <ChatAvatar seed={b.avatar} className="size-6 shrink-0 rounded-lg mt-0.5" />
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1.5">
+                                  <span className="font-semibold text-xs text-foreground">
+                                    {b.name}
+                                  </span>
+                                  {isSelected && (
+                                    <span className="text-[10px] text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
+                                      Active
+                                    </span>
+                                  )}
+                                </div>
+                                {b.job && (
+                                  <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">
+                                    {b.job}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </PromptInputSelectItem>
+                        )
+                      })}
+                    </PromptInputSelectContent>
+                  </PromptInputSelect>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  Press Enter to send, Shift+Enter for new line
+                </div>
+              )}
               <PromptInputSubmit
                 status={status}
                 disabled={!input.trim()}
@@ -561,3 +1107,4 @@ function ChatInner({
 }
 
 export default Chat
+
