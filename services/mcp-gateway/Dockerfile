@@ -25,3 +25,4 @@ HEALTHCHECK --interval=20s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["npm", "start"]
+

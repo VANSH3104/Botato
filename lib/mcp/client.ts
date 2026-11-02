@@ -1,4 +1,4 @@
-import { tool, type ToolSet } from "ai";
+import { jsonSchema, tool, type ToolSet } from "ai";
 import { z } from "zod";
 import { validateMcpUrl, sanitizeMcpOutput } from "./security";
 import type {
@@ -201,8 +201,10 @@ export class McpClient {
       const toolName = mcpTool.name;
       const description = mcpTool.description || `Execute ${toolName} via MCP.`;
 
-      // Build safe fallback schema for any arguments
-      const inputSchema = z.record(z.string(), z.unknown()).describe("Arguments for the MCP tool");
+      const inputSchema =
+        mcpTool.inputSchema && typeof mcpTool.inputSchema === "object" && Object.keys(mcpTool.inputSchema).length > 0
+          ? jsonSchema<Record<string, unknown>>(mcpTool.inputSchema as Parameters<typeof jsonSchema>[0])
+          : z.record(z.string(), z.unknown());
 
       sdkTools[`mcp_${toolName}`] = tool({
         description: `[MCP Tool] ${description}`,

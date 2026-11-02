@@ -27,7 +27,7 @@ export const chatAgent = chat.agent({
       sandboxId: string | null;
     }> = [];
 
-    let chatUserId: string | null = null;
+    let chatUserId: string | null = typeof data.userId === "string" ? data.userId : null;
 
     // Query group chat or individual bot details
     if (chatId) {
@@ -163,6 +163,16 @@ export const chatAgent = chat.agent({
       } catch (err) {
         console.error("Failed to query bot details for chat agent:", err);
       }
+    }
+
+    if (!activeBot && typeof data.selectedBotId === "string") {
+      activeBot = {
+        id: data.selectedBotId as string,
+        name: (data.botName as string) || "Assistant",
+        job: (data.botJob as string) || null,
+        instructions: (data.botInstructions as string) || null,
+        sandboxId: null,
+      };
     }
 
     // Load persistent sandboxes and memories for multi-bot turns
@@ -469,7 +479,11 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
     if (Object.keys(mcpTools).length > 0) {
       instructionsList.push(
         `CONNECTED APPS & MCP TOOLS:`,
-        `You have access to active external MCP tools (${Object.keys(mcpTools).join(", ")}). When the user asks you to interact with external services, tools, or apps, call the corresponding MCP tool.`
+        `You have direct access to active external MCP tools (${Object.keys(mcpTools).join(", ")}).`,
+        `CRITICAL RULES FOR CONNECTED TOOLS:`,
+        `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens, secret keys, or credentials in chat.`,
+        `2. When asked to create, find, list, or update items in Notion or any connected service, call the appropriate tool directly (e.g. use search tools first to find target pages or databases, then call creation or update tools).`,
+        `3. Execute actions immediately with your tools instead of telling the user how to do it manually.`
       );
     }
 

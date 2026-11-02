@@ -35,11 +35,13 @@ app.get("/", (_req: Request, res: Response) => {
 app.post("/:serviceId", async (req: Request, res: Response): Promise<void> => {
   const serviceId = req.params.serviceId.toLowerCase();
   const service = MCP_SERVICES[serviceId];
+  const bodyObj = (req.body && typeof req.body === "object" ? req.body : {}) as Record<string, unknown>;
+  const requestId = (bodyObj.id as string | number) ?? null;
 
   if (!service) {
     res.status(404).json({
       jsonrpc: "2.0",
-      id: req.body?.id || null,
+      id: requestId,
       error: {
         code: -32601,
         message: `Unknown MCP service: "${serviceId}". Available services: ${Object.keys(MCP_SERVICES).join(", ")}`,
@@ -56,6 +58,11 @@ app.post("/:serviceId", async (req: Request, res: Response): Promise<void> => {
     ...process.env,
     [service.tokenEnvVar]: token,
   };
+
+  if (serviceId === "notion") {
+    env.NOTION_TOKEN = token;
+    env.NOTION_API_KEY = token;
+  }
 
   const payloadStr = JSON.stringify(req.body) + "\n";
   let stdoutData = "";
@@ -77,7 +84,7 @@ app.post("/:serviceId", async (req: Request, res: Response): Promise<void> => {
       }
       res.status(504).json({
         jsonrpc: "2.0",
-        id: req.body?.id || null,
+        id: requestId,
         error: {
           code: -32000,
           message: `MCP execution timed out for service "${serviceId}".`,
@@ -128,7 +135,7 @@ app.post("/:serviceId", async (req: Request, res: Response): Promise<void> => {
       clearTimeout(timer);
       res.status(500).json({
         jsonrpc: "2.0",
-        id: req.body?.id || null,
+        id: requestId,
         error: {
           code: -32603,
           message: `Failed to spawn MCP process for "${serviceId}": ${err.message}`,
@@ -150,7 +157,7 @@ app.post("/:serviceId", async (req: Request, res: Response): Promise<void> => {
       } catch {
         res.status(500).json({
           jsonrpc: "2.0",
-          id: req.body?.id || null,
+          id: requestId,
           error: {
             code: -32603,
             message: `MCP process exited with code ${code}. Stderr: ${stderrData.slice(0, 300) || "No error output"}`,

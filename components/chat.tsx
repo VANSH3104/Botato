@@ -478,6 +478,7 @@ export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatPro
   const transport = useTriggerChatTransport<typeof chatAgent>({
     task: "chat-agent",
     clientData: {
+      userId: chat.bot?.userId,
       isGroup: Boolean(chat.isGroup),
       groupName: chat.isGroup ? chat.name : undefined,
       selectedBotId: targetBot?.id,
@@ -498,6 +499,7 @@ export function Chat({ chatId, chat, onSandboxActivity, onOpenDesktop }: ChatPro
         chatId: id,
         clientData: {
           ...(clientData as Record<string, unknown>),
+          userId: chat.bot?.userId,
           isGroup: Boolean(chat.isGroup),
           groupName: chat.isGroup ? chat.name : undefined,
           selectedBotId: targetBot?.id,

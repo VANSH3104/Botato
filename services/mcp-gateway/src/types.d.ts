@@ -4,7 +4,7 @@ declare module "express" {
   export interface Request extends IncomingMessage {
     params: Record<string, string>;
     query: Record<string, string>;
-    body: any;
+    body: unknown;
     headers: Record<string, string | string[] | undefined>;
     path: string;
   }
@@ -16,16 +16,16 @@ declare module "express" {
   }
 
   export interface Application {
-    use(...middlewares: any[]): this;
-    get(path: string, ...handlers: Array<(req: Request, res: Response) => any>): this;
-    post(path: string, ...handlers: Array<(req: Request, res: Response) => any>): this;
-    listen(port: number, host: string, callback?: () => void): any;
-    listen(port: number, callback?: () => void): any;
+    use(...middlewares: unknown[]): this;
+    get(path: string, ...handlers: Array<(req: Request, res: Response) => unknown>): this;
+    post(path: string, ...handlers: Array<(req: Request, res: Response) => unknown>): this;
+    listen(port: number, host: string, callback?: () => void): unknown;
+    listen(port: number, callback?: () => void): unknown;
   }
 
   function express(): Application;
   namespace express {
-    export function json(options?: any): any;
+    export function json(options?: unknown): unknown;
   }
 
   export default express;

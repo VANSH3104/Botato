@@ -79,7 +79,10 @@ export interface McpTemplate {
 const DEFAULT_GATEWAY_BASE =
   typeof window !== "undefined" && (window as unknown as { __BOTATO_GATEWAY__?: string }).__BOTATO_GATEWAY__
     ? (window as unknown as { __BOTATO_GATEWAY__?: string }).__BOTATO_GATEWAY__!
-    : process.env.NEXT_PUBLIC_MCP_GATEWAY_URL || "http://localhost:8000";
+    : process.env.NEXT_PUBLIC_MCP_GATEWAY_URL ||
+      (typeof window !== "undefined" && window.location.hostname.includes("railway.app")
+        ? "https://mcp-gateway-production-5b9c.up.railway.app"
+        : "http://localhost:8000");
 
 export const MCP_TEMPLATES: McpTemplate[] = [
   // Productivity & Workspace (Unified MCP Gateway)
