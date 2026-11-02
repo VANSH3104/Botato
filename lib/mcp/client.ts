@@ -1,6 +1,6 @@
 import { jsonSchema, tool, type ToolSet } from "ai";
 import { z } from "zod";
-import { validateMcpUrl, sanitizeMcpOutput } from "./security";
+import { validateMcpUrl, condenseMcpPayload } from "./security";
 import type {
   JsonRpcRequest,
   JsonRpcResponse,
@@ -52,8 +52,8 @@ function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
       }
     }
 
-    if (typeof res.description === "string" && res.description.length > 150) {
-      res.description = res.description.slice(0, 150) + "...";
+    if (typeof res.description === "string" && res.description.length > 80) {
+      res.description = res.description.slice(0, 80) + "...";
     }
 
     return res;
@@ -233,7 +233,7 @@ export class McpClient {
         textOutput = JSON.stringify(result, null, 2);
       }
 
-      const sanitized = sanitizeMcpOutput(textOutput, 1500);
+      const sanitized = condenseMcpPayload(textOutput, name);
       return {
         success: !result?.isError,
         output: sanitized || "(Tool completed with empty output)",

@@ -515,24 +515,24 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
 
     const instructions = instructionsList.join("\n\n");
 
-    // Window history to the latest 3 messages to stay strictly within Groq's 8,000 TPM limit
-    const MAX_WINDOW = 3;
+    // Window history to the latest 2 messages to stay strictly within Groq's 8,000 TPM limit
+    const MAX_WINDOW = 2;
     let windowedMessages = messages.length > MAX_WINDOW ? messages.slice(-MAX_WINDOW) : messages;
 
     // Avoid starting with an orphaned tool message in the sliding window
     while (
-      windowedMessages.length > 2 &&
+      windowedMessages.length > 1 &&
       (windowedMessages[0].role === "tool" || (windowedMessages[0] as { type?: string }).type === "tool")
     ) {
       windowedMessages = windowedMessages.slice(1);
     }
 
-    // Compact history aggressively: cap prior text to 250 chars and tool results tightly
+    // Compact history aggressively: cap prior text to 150 chars and tool results tightly
     const compactMessages = windowedMessages.map((msg, index) => {
       const isLatestUser = index === windowedMessages.length - 1 && msg.role === "user";
 
       if (typeof msg.content === "string") {
-        const maxLen = isLatestUser ? 600 : 250;
+        const maxLen = isLatestUser ? 500 : 150;
         if (msg.content.length > maxLen) {
           return { ...msg, content: msg.content.slice(0, maxLen) + "\n...[truncated]" };
         }
@@ -543,7 +543,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         const compactedParts = msg.content.map((part) => {
           const p = part as Record<string, unknown>;
           if (p.type === "text" && typeof p.text === "string") {
-            const maxLen = isLatestUser ? 600 : 250;
+            const maxLen = isLatestUser ? 500 : 150;
             if (p.text.length > maxLen) {
               return { ...p, text: p.text.slice(0, maxLen) + "\n...[truncated]" };
             }
@@ -569,7 +569,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
                 if (base64Index !== -1) {
                   const b64 = url.slice(base64Index + 8);
                   const decoded = Buffer.from(b64, "base64").toString("utf-8");
-                  const truncated = decoded.slice(0, 1500);
+                  const truncated = decoded.slice(0, 500);
                   return {
                     type: "text",
                     text: `\n[Attached File: ${filename}]\n\`\`\`\n${truncated}\n\`\`\`\n`,
@@ -583,8 +583,8 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
           }
           if (p.type === "tool-result") {
             const raw = p.output ?? p.result;
-            if (typeof raw === "string" && raw.length > 800) {
-              const truncated = raw.slice(0, 800) + "\n...[truncated]";
+            if (typeof raw === "string" && raw.length > 250) {
+              const truncated = raw.slice(0, 250) + "\n...[truncated]";
               return { ...p, output: truncated, result: truncated };
             }
             if (typeof raw === "object" && raw !== null) {
@@ -592,12 +592,8 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
               for (const key of Object.keys(resObj)) {
                 const val = resObj[key];
                 if (typeof val === "string") {
-                  if (key === "response") {
-                    resObj[key] = val.length > 800 ? val.slice(0, 800) + "\n...[truncated]" : val;
-                  } else if (key === "stdout" || key === "summary" || key === "stderr") {
-                    resObj[key] = val.length > 500 ? val.slice(0, 500) + "\n...[truncated]" : val;
-                  } else if (val.length > 150) {
-                    resObj[key] = val.slice(0, 150) + "...";
+                  if (val.length > 100) {
+                    resObj[key] = val.slice(0, 100) + "...";
                   }
                 }
               }
@@ -633,8 +629,8 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructions,
       messages: compactMessages as typeof messages,
       tools: activeTools,
-      maxOutputTokens: 1024,
-      stopWhen: [isStepCount(10)],
+      maxOutputTokens: 512,
+      stopWhen: [isStepCount(6)],
       abortSignal: signal,
     });
   },
