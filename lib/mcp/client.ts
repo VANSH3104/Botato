@@ -39,8 +39,8 @@ function sanitizeSchemaForLlm(raw: unknown, maxDepth: number = 3): Record<string
   function cleanNode(node: unknown, depth = 0): unknown {
     if (!node || typeof node !== "object") return node;
     if (Array.isArray(node)) {
-      if (depth >= maxDepth) return [];
-      return node.slice(0, 3).map((item) => cleanNode(item, depth + 1));
+      const items = node.slice(0, 2).map((item) => cleanNode(item, depth + 1)).filter((x) => x !== undefined);
+      return items.length > 0 ? items : undefined;
     }
 
     if (depth >= maxDepth) {
@@ -64,10 +64,25 @@ function sanitizeSchemaForLlm(raw: unknown, maxDepth: number = 3): Record<string
         res["type"] = "object";
         continue;
       }
+      if (k === "anyOf" || k === "oneOf" || k === "allOf") {
+        if (Array.isArray(v) && v.length > 0) {
+          const first = cleanNode(v[0], depth + 1);
+          if (first && typeof first === "object" && !Array.isArray(first)) {
+            Object.assign(res, first);
+            continue;
+          }
+        }
+        res["type"] = "object";
+        continue;
+      }
+
       if (typeof v === "object" && v !== null && "$ref" in (v as Record<string, unknown>)) {
         res[k] = { type: "object" };
       } else {
-        res[k] = cleanNode(v, depth + 1);
+        const cleaned = cleanNode(v, depth + 1);
+        if (cleaned !== undefined) {
+          res[k] = cleaned;
+        }
       }
     }
 
@@ -79,8 +94,8 @@ function sanitizeSchemaForLlm(raw: unknown, maxDepth: number = 3): Record<string
   }
 
   const result = cleanNode(raw, 0) as Record<string, unknown>;
-  if (!result.type) {
-    result.type = "object";
+  if (!result || typeof result !== "object" || Array.isArray(result) || !result.type) {
+    return { type: "object", properties: {} };
   }
   return result;
 }

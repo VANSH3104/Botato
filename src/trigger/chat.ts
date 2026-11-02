@@ -20,16 +20,16 @@ function applyErrorCooldown(model: string, errMsg: string) {
     modelCooldowns.set(model, Date.now() + 30 * 60 * 1000); // 30 min daily cooldown
   } else if (/tokens per minute|TPM|ITPM|rate limit|429/i.test(errMsg)) {
     modelCooldowns.set(model, Date.now() + 25 * 1000); // 25s per-minute cooldown
+  } else if (/not exist|not have access|model_not_found/i.test(errMsg)) {
+    modelCooldowns.set(model, Date.now() + 24 * 60 * 60 * 1000); // unavailable on key
   }
 }
 
 function createResilientModel(primaryName: string) {
   const candidateModels = [
     primaryName,
-    "llama-3.3-70b-versatile",
-    "qwen/qwen3.8-27b",
     "openai/gpt-oss-20b",
-    "llama-3.1-8b-instant",
+    "qwen/qwen3.8-27b",
   ].filter((v, i, a) => a.indexOf(v) === i);
 
   // Pick the first candidate model not currently cooling down
