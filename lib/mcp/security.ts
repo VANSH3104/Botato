@@ -72,7 +72,7 @@ export function maskSensitiveHeaders(headers?: Record<string, string> | null): R
 /**
  * Sanitizes tool results to prevent context window pollution and protect secrets.
  */
-export function sanitizeMcpOutput(output: string, maxLength: number = 4000): string {
+export function sanitizeMcpOutput(output: string, maxLength: number = 2000): string {
   let clean = output;
   if (clean.length > maxLength) {
     clean = clean.slice(0, maxLength) + `\n... [output truncated, ${clean.length - maxLength} characters omitted for privacy and length]`;

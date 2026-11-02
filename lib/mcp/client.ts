@@ -24,6 +24,8 @@ const LOW_PRIORITY_TOOL_PATTERNS = [
   /update-a-block/i,
   /delete-a-block/i,
   /retrieve-a-page-property/i,
+  /get-block-children/i,
+  /patch-block-children/i,
 ];
 
 function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {

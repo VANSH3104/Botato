@@ -483,7 +483,8 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         `CRITICAL RULES FOR CONNECTED TOOLS:`,
         `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens, secret keys, or credentials in chat.`,
         `2. When asked to create, find, list, or update items in Notion or any connected service, call the appropriate tool directly (e.g. use search tools first to find target pages or databases, then call creation or update tools).`,
-        `3. Execute actions immediately with your tools instead of telling the user how to do it manually.`
+        `3. Execute actions immediately with your tools instead of telling the user how to do it manually.`,
+        `4. To inspect, view, or read the sections and contents of a Notion page, search for the page first, then ALWAYS call mcp_API-retrieve-page-markdown with page_id to get all sections in a single fast call.`
       );
     }
 
@@ -608,7 +609,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       messages: compactMessages as typeof messages,
       tools: activeTools,
       maxOutputTokens: 1024,
-      stopWhen: [isStepCount(12)],
+      stopWhen: [isStepCount(6)],
       abortSignal: signal,
     });
   },
