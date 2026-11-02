@@ -269,7 +269,7 @@ export function BotDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerNode && <DialogTrigger render={triggerNode} />}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[520px] sm:max-w-[520px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit bot" : "New bot"}</DialogTitle>
             <DialogDescription>
