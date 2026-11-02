@@ -1,0 +1,25 @@
+{
+  "name": "botato-mcp-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts"
+  },
+  "dependencies": {
+    "@cocal/google-calendar-mcp": "^1.0.2",
+    "@modelcontextprotocol/server-github": "^0.6.2",
+    "@modelcontextprotocol/server-google-drive": "^0.6.2",
+    "@modelcontextprotocol/server-slack": "^0.6.2",
+    "@notionhq/mcp-server": "^0.1.6",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

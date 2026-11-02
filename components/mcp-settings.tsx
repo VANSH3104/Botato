@@ -76,16 +76,21 @@ export interface McpTemplate {
   accentBorder: string;
 }
 
+const DEFAULT_GATEWAY_BASE =
+  typeof window !== "undefined" && (window as unknown as { __BOTATO_GATEWAY__?: string }).__BOTATO_GATEWAY__
+    ? (window as unknown as { __BOTATO_GATEWAY__?: string }).__BOTATO_GATEWAY__!
+    : process.env.NEXT_PUBLIC_MCP_GATEWAY_URL || "http://localhost:8000";
+
 export const MCP_TEMPLATES: McpTemplate[] = [
-  // Productivity & Workspace (Open-Source Bridges)
+  // Productivity & Workspace (Unified MCP Gateway)
   {
-    name: "Notion (via MCP Bridge)",
+    name: "Notion (via MCP Gateway)",
     category: "productivity",
     categoryLabel: "Productivity",
-    url: "http://localhost:8000/mcp",
+    url: `${DEFAULT_GATEWAY_BASE}/notion`,
     headerKey: "Authorization",
     headerPlaceholder: "Bearer ntn_...",
-    keyGuide: "Connect to your Notion MCP bridge (e.g. supergateway wrapping @notionhq/mcp-server) using your Notion Internal Integration Token (ntn_...).",
+    keyGuide: "Connects via Botato's unified MCP gateway. Enter your Notion Internal Integration Token (ntn_...).",
     desc: "Search pages, query databases, read documents, and update content in your Notion workspace.",
     icon: FileText,
     accentBg: "bg-stone-500/10",
@@ -93,13 +98,13 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     accentBorder: "border-stone-500/30",
   },
   {
-    name: "Google Calendar (via Bridge)",
+    name: "Google Calendar (via Gateway)",
     category: "productivity",
     categoryLabel: "Productivity",
-    url: "http://localhost:8001/mcp",
+    url: `${DEFAULT_GATEWAY_BASE}/google-calendar`,
     headerKey: "Authorization",
     headerPlaceholder: "Bearer ...",
-    keyGuide: "Connect via open-source Google Calendar bridge (e.g. supergateway wrapping @cocal/google-calendar-mcp) with your Google API credentials.",
+    keyGuide: "Connects via Botato's unified MCP gateway with your Google Calendar API credentials.",
     desc: "Check schedule availability, retrieve upcoming meetings, and create calendar events.",
     icon: Calendar,
     accentBg: "bg-blue-500/10",
@@ -107,13 +112,13 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     accentBorder: "border-blue-500/30",
   },
   {
-    name: "Google Drive & Workspace (via Bridge)",
+    name: "Google Drive & Workspace",
     category: "productivity",
     categoryLabel: "Productivity",
-    url: "http://localhost:8002/mcp",
+    url: `${DEFAULT_GATEWAY_BASE}/google-drive`,
     headerKey: "Authorization",
     headerPlaceholder: "Bearer ...",
-    keyGuide: "Connect via open-source Google Drive bridge (e.g. supergateway wrapping @modelcontextprotocol/server-google-drive) with your Google OAuth credentials.",
+    keyGuide: "Connects via Botato's unified MCP gateway with your Google Drive OAuth credentials.",
     desc: "Search files, read Google Docs, view spreadsheets, and access workspace resources.",
     icon: FolderGit2,
     accentBg: "bg-amber-500/10",
@@ -121,13 +126,13 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     accentBorder: "border-amber-500/30",
   },
   {
-    name: "Slack (via MCP Bridge)",
+    name: "Slack (via MCP Gateway)",
     category: "productivity",
     categoryLabel: "Productivity",
-    url: "http://localhost:8003/mcp",
+    url: `${DEFAULT_GATEWAY_BASE}/slack`,
     headerKey: "Authorization",
     headerPlaceholder: "Bearer xoxb-...",
-    keyGuide: "Connect via open-source Slack bridge (e.g. supergateway wrapping @modelcontextprotocol/server-slack) with a Bot User OAuth Token (xoxb-...).",
+    keyGuide: "Connects via Botato's unified MCP gateway with a Bot User OAuth Token (xoxb-...).",
     desc: "Search channels, read conversation threads, post messages, and inspect user profiles.",
     icon: Hash,
     accentBg: "bg-purple-500/10",
@@ -135,18 +140,32 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     accentBorder: "border-purple-500/30",
   },
   {
-    name: "Discord (via MCP Bridge)",
+    name: "Discord (via MCP Gateway)",
     category: "productivity",
     categoryLabel: "Productivity",
-    url: "http://localhost:8004/mcp",
+    url: `${DEFAULT_GATEWAY_BASE}/discord`,
     headerKey: "Authorization",
     headerPlaceholder: "Bot ...",
-    keyGuide: "Connect via open-source Discord bridge (e.g. supergateway wrapping discord-mcp) with your Discord Bot Token.",
+    keyGuide: "Connects via Botato's unified MCP gateway with your Discord Bot Token.",
     desc: "Read server channels, search message history, post updates, and interact with communities.",
     icon: MessageSquare,
     accentBg: "bg-indigo-500/10",
     accentText: "text-indigo-500 dark:text-indigo-400",
     accentBorder: "border-indigo-500/30",
+  },
+  {
+    name: "GitHub (via MCP Gateway)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: `${DEFAULT_GATEWAY_BASE}/github`,
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ghp_...",
+    keyGuide: "Connects via Botato's unified MCP gateway with a GitHub Personal Access Token.",
+    desc: "Search repositories, read source code, inspect pull requests, and manage issues.",
+    icon: FolderGit2,
+    accentBg: "bg-zinc-500/10",
+    accentText: "text-zinc-700 dark:text-zinc-300",
+    accentBorder: "border-zinc-500/30",
   },
 
   // Developer & Cloud Tools (Direct Native Endpoints)
