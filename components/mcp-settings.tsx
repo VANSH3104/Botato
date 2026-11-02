@@ -13,14 +13,13 @@ import {
   HelpCircle,
   FileText,
   Database,
-  Code2,
   Zap,
   Check,
   Copy,
-  CreditCard,
-  Bug,
-  Cloud,
-  Search,
+  Calendar,
+  Hash,
+  MessageSquare,
+  FolderGit2,
   ChevronDown,
 } from "lucide-react";
 
@@ -59,7 +58,7 @@ interface McpServerItem {
   maskedHeaders?: Record<string, string>;
 }
 
-type McpCategory = "productivity" | "search" | "developer";
+type McpCategory = "productivity" | "developer";
 
 export interface McpTemplate {
   name: string;
@@ -78,6 +77,79 @@ export interface McpTemplate {
 }
 
 export const MCP_TEMPLATES: McpTemplate[] = [
+  // Productivity & Workspace (Open-Source Bridges)
+  {
+    name: "Notion (via MCP Bridge)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "http://localhost:8000/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ntn_...",
+    keyGuide: "Connect to your Notion MCP bridge (e.g. supergateway wrapping @notionhq/mcp-server) using your Notion Internal Integration Token (ntn_...).",
+    desc: "Search pages, query databases, read documents, and update content in your Notion workspace.",
+    icon: FileText,
+    accentBg: "bg-stone-500/10",
+    accentText: "text-stone-700 dark:text-stone-300",
+    accentBorder: "border-stone-500/30",
+  },
+  {
+    name: "Google Calendar (via Bridge)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "http://localhost:8001/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Connect via open-source Google Calendar bridge (e.g. supergateway wrapping @cocal/google-calendar-mcp) with your Google API credentials.",
+    desc: "Check schedule availability, retrieve upcoming meetings, and create calendar events.",
+    icon: Calendar,
+    accentBg: "bg-blue-500/10",
+    accentText: "text-blue-500 dark:text-blue-400",
+    accentBorder: "border-blue-500/30",
+  },
+  {
+    name: "Google Drive & Workspace (via Bridge)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "http://localhost:8002/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer ...",
+    keyGuide: "Connect via open-source Google Drive bridge (e.g. supergateway wrapping @modelcontextprotocol/server-google-drive) with your Google OAuth credentials.",
+    desc: "Search files, read Google Docs, view spreadsheets, and access workspace resources.",
+    icon: FolderGit2,
+    accentBg: "bg-amber-500/10",
+    accentText: "text-amber-500 dark:text-amber-400",
+    accentBorder: "border-amber-500/30",
+  },
+  {
+    name: "Slack (via MCP Bridge)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "http://localhost:8003/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bearer xoxb-...",
+    keyGuide: "Connect via open-source Slack bridge (e.g. supergateway wrapping @modelcontextprotocol/server-slack) with a Bot User OAuth Token (xoxb-...).",
+    desc: "Search channels, read conversation threads, post messages, and inspect user profiles.",
+    icon: Hash,
+    accentBg: "bg-purple-500/10",
+    accentText: "text-purple-500 dark:text-purple-400",
+    accentBorder: "border-purple-500/30",
+  },
+  {
+    name: "Discord (via MCP Bridge)",
+    category: "productivity",
+    categoryLabel: "Productivity",
+    url: "http://localhost:8004/mcp",
+    headerKey: "Authorization",
+    headerPlaceholder: "Bot ...",
+    keyGuide: "Connect via open-source Discord bridge (e.g. supergateway wrapping discord-mcp) with your Discord Bot Token.",
+    desc: "Read server channels, search message history, post updates, and interact with communities.",
+    icon: MessageSquare,
+    accentBg: "bg-indigo-500/10",
+    accentText: "text-indigo-500 dark:text-indigo-400",
+    accentBorder: "border-indigo-500/30",
+  },
+
+  // Developer & Cloud Tools (Direct Native Endpoints)
   {
     name: "Neon Postgres",
     category: "developer",
@@ -85,7 +157,7 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     url: "https://mcp.neon.tech/mcp",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer neon_...",
-    keyGuide: "Get an API key from the Neon Console (console.neon.tech).",
+    keyGuide: "Get an API key directly from console.neon.tech. Direct native cloud MCP endpoint.",
     desc: "Inspect Postgres tables, run queries, and manage database branches.",
     icon: Database,
     accentBg: "bg-cyan-500/10",
@@ -99,40 +171,12 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     url: "https://mcp.supabase.com/mcp",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer sbp_...",
-    keyGuide: "Create a Personal Access Token from your Supabase account settings.",
+    keyGuide: "Create a Personal Access Token in your Supabase Account settings. Direct native cloud MCP endpoint.",
     desc: "Query Postgres, inspect schemas, and work with storage resources.",
     icon: Database,
     accentBg: "bg-emerald-500/10",
     accentText: "text-emerald-500 dark:text-emerald-400",
     accentBorder: "border-emerald-500/30",
-  },
-  {
-    name: "Stripe Billing & Payments",
-    category: "developer",
-    categoryLabel: "Developer tools",
-    url: "https://mcp.stripe.com",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "Use an appropriate restricted or secret key from your Stripe dashboard.",
-    desc: "Inspect customers, retrieve invoices, and review subscription information.",
-    icon: CreditCard,
-    accentBg: "bg-indigo-500/10",
-    accentText: "text-indigo-500 dark:text-indigo-400",
-    accentBorder: "border-indigo-500/30",
-  },
-  {
-    name: "Sentry Error Tracking",
-    category: "developer",
-    categoryLabel: "Developer tools",
-    url: "https://mcp.sentry.io",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "Create a user auth token in Sentry account settings.",
-    desc: "Query production issues, inspect stack traces, and review releases.",
-    icon: Bug,
-    accentBg: "bg-rose-500/10",
-    accentText: "text-rose-500 dark:text-rose-400",
-    accentBorder: "border-rose-500/30",
   },
   {
     name: "Linear Tasks",
@@ -141,75 +185,18 @@ export const MCP_TEMPLATES: McpTemplate[] = [
     url: "https://mcp.linear.app/mcp",
     headerKey: "Authorization",
     headerPlaceholder: "Bearer lin_api_...",
-    keyGuide: "Create a Personal API key in Linear Settings → Account → API.",
+    keyGuide: "Create a Personal API key in Linear Settings → Account → API. Direct native cloud MCP endpoint.",
     desc: "Track issues, update projects, and create backlog tasks.",
     icon: CheckCircle2,
-    accentBg: "bg-indigo-500/10",
-    accentText: "text-indigo-500 dark:text-indigo-400",
-    accentBorder: "border-indigo-500/30",
-  },
-  {
-    name: "GitHub Copilot MCP",
-    category: "developer",
-    categoryLabel: "Developer tools",
-    url: "https://api.githubcopilot.com/mcp/",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "Use a GitHub token with only the permissions your integration requires.",
-    desc: "Work with repositories, pull requests, diffs, and issues.",
-    icon: Code2,
     accentBg: "bg-violet-500/10",
     accentText: "text-violet-500 dark:text-violet-400",
     accentBorder: "border-violet-500/30",
   },
-  {
-    name: "Cloudflare Infrastructure",
-    category: "developer",
-    categoryLabel: "Developer tools",
-    url: "https://mcp.cloudflare.com/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "Create an API token with only the Cloudflare permissions you need.",
-    desc: "Manage Workers, KV namespaces, DNS records, and R2 resources.",
-    icon: Cloud,
-    accentBg: "bg-orange-500/10",
-    accentText: "text-orange-500 dark:text-orange-400",
-    accentBorder: "border-orange-500/30",
-  },
-  {
-    name: "Notion Workspace",
-    category: "productivity",
-    categoryLabel: "Productivity",
-    url: "https://mcp.notion.com/mcp",
-    headerKey: "Authorization",
-    headerPlaceholder: "Bearer ...",
-    keyGuide: "mcp.notion.com requires an OAuth token. If using an Internal Integration token (ntn_...), provide your self-hosted Notion MCP server URL.",
-    desc: "Search pages, read workspace documents, and work with databases.",
-    icon: FileText,
-    accentBg: "bg-stone-500/10",
-    accentText: "text-stone-700 dark:text-stone-300",
-    accentBorder: "border-stone-500/30",
-  },
-  {
-    name: "Brave Search",
-    category: "search",
-    categoryLabel: "Search & web",
-    url: "https://api.search.brave.com/res/v1/mcp",
-    headerKey: "X-Subscription-Token",
-    headerPlaceholder: "BSA...",
-    keyGuide: "Get a Brave Search API key from brave.com/search/api.",
-    desc: "Search the web for current pages, articles, and information.",
-    icon: Search,
-    accentBg: "bg-amber-500/10",
-    accentText: "text-amber-500 dark:text-amber-400",
-    accentBorder: "border-amber-500/30",
-  },
 ];
 
 const CATEGORY_GROUPS: { id: McpCategory; label: string }[] = [
-  { id: "developer", label: "Developer tools" },
-  { id: "productivity", label: "Productivity" },
-  { id: "search", label: "Search & web" },
+  { id: "productivity", label: "Productivity & Workspace (Bridge)" },
+  { id: "developer", label: "Developer & Cloud (Direct)" },
 ];
 
 export function McpSettings({
@@ -310,7 +297,13 @@ export function McpSettings({
         const headerKey = activeTemplate?.headerKey ?? "Authorization";
 
         if (headerKey.toLowerCase() === "authorization") {
-          headers.Authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+          if (token.startsWith("Bearer ") || token.startsWith("Bot ")) {
+            headers.Authorization = token;
+          } else if (activeTemplate?.headerPlaceholder?.startsWith("Bot ")) {
+            headers.Authorization = `Bot ${token}`;
+          } else {
+            headers.Authorization = `Bearer ${token}`;
+          }
         } else {
           headers[headerKey] = token;
         }
@@ -443,14 +436,14 @@ export function McpSettings({
         <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-500">
           <ShieldCheck className="size-5" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold text-foreground">Credential protection</p>
             <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
               Server-side authentication
             </span>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground break-words">
             {botName || "Your bot"} connects to external MCP servers through your server-side
             integration. Keep API tokens private and grant only the permissions required.
           </p>
@@ -461,12 +454,11 @@ export function McpSettings({
       {!isAdding && (
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">MCP server directory</h3>
-                <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-muted-foreground">
-                  Choose an integration from the dropdown. You can review its details before
-                  entering credentials and connecting it.
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-foreground">MCP directory</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Select an integration to configure or connect a custom server.
                 </p>
               </div>
 
@@ -475,14 +467,14 @@ export function McpSettings({
                 variant="outline"
                 size="sm"
                 onClick={handleStartCustomServer}
-                className="h-9 shrink-0 gap-2 cursor-pointer"
+                className="h-8 shrink-0 gap-1.5 text-xs cursor-pointer px-2.5"
               >
-                <Plus className="size-4" />
-                Add custom server
+                <Plus className="size-3.5" />
+                Custom server
               </Button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Field>
                 <FieldLabel htmlFor="mcp-template">Choose an MCP integration</FieldLabel>
                 <Select
@@ -520,42 +512,61 @@ export function McpSettings({
               </Field>
 
               {selectedTemplate ? (
-                <div className="flex flex-col gap-3 rounded-xl border border-border bg-background/70 p-3 sm:flex-row sm:items-center">
-                  <div
-                    className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${selectedTemplate.accentBg} ${selectedTemplate.accentBorder} ${selectedTemplate.accentText}`}
-                  >
-                    {TemplateIcon && <TemplateIcon className="size-5" />}
-                  </div>
+                <div className="space-y-3 rounded-xl border border-border bg-background/80 p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-lg border ${selectedTemplate.accentBg} ${selectedTemplate.accentBorder} ${selectedTemplate.accentText}`}
+                      >
+                        {TemplateIcon && <TemplateIcon className="size-4.5" />}
+                      </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground">
-                        {selectedTemplate.name}
-                      </p>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {selectedTemplate.categoryLabel}
-                      </span>
-                      <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                        {selectedTemplate.headerKey ? "Authentication required" : "No token configured"}
-                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {selectedTemplate.name}
+                          </p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                              selectedTemplate.category === "productivity"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            }`}
+                          >
+                            {selectedTemplate.category === "productivity"
+                              ? "Open-source bridge"
+                              : "Direct endpoint"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      {selectedTemplate.desc}
-                    </p>
-                    <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground/80">
-                      {selectedTemplate.url}
-                    </p>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="shrink-0 gap-1.5 cursor-pointer h-8 px-3"
+                      onClick={() => handleChooseTemplate(selectedTemplate)}
+                    >
+                      <Zap className="size-3.5" />
+                      Configure
+                    </Button>
                   </div>
 
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="shrink-0 gap-2 cursor-pointer"
-                    onClick={() => handleChooseTemplate(selectedTemplate)}
-                  >
-                    <Zap className="size-3.5" />
-                    Configure
-                  </Button>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {selectedTemplate.desc}
+                  </p>
+
+                  {selectedTemplate.keyGuide && (
+                    <div className="rounded-lg bg-muted/60 p-2.5 text-[11px] leading-relaxed text-muted-foreground border border-border/50 break-words">
+                      <span className="font-semibold text-foreground">Setup: </span>
+                      {selectedTemplate.keyGuide}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-muted-foreground/80">
+                    <span className="truncate">Default: {selectedTemplate.url}</span>
+                    <span className="shrink-0 text-muted-foreground/60">{selectedTemplate.headerKey || "No auth"}</span>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 rounded-xl border border-dashed border-border bg-background/50 p-3 text-xs text-muted-foreground">

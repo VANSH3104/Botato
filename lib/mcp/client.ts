@@ -20,11 +20,11 @@ export class McpClient {
     timeoutMs?: number;
   }) {
     const validation = validateMcpUrl(options.url);
-    if (!validation.valid) {
+    if (!validation.valid || !validation.url) {
       throw new Error(validation.error || "Invalid MCP URL");
     }
 
-    this.url = options.url.replace(/\/+$/, "");
+    this.url = validation.url.toString().replace(/\/+$/, "");
     this.headers = options.headers || {};
     this.timeoutMs = options.timeoutMs || 15000;
   }
@@ -41,7 +41,9 @@ export class McpClient {
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const res = await fetch(this.url, {
+      let res: Response;
+      try {
+      res = await fetch(this.url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,6 +53,38 @@ export class McpClient {
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
+    } catch (fetchError: unknown) {
+      const err = fetchError as {
+        code?: string;
+        cause?: { code?: string; message?: string; errors?: Array<{ code?: string; message?: string }> };
+        message?: string;
+      };
+
+      const causeCode =
+        err.code ||
+        err.cause?.code ||
+        err.cause?.errors?.[0]?.code;
+
+      if (causeCode === "ECONNREFUSED") {
+        throw new Error(
+          `Connection refused at ${this.url}. No server is listening at this address or port. Please ensure your MCP server or bridge process is running.`
+        );
+      }
+      if (causeCode === "ENOTFOUND") {
+        throw new Error(
+          `Host not found for ${this.url}. Please check that the domain name is valid and reachable.`
+        );
+      }
+      if (causeCode === "ETIMEDOUT" || err.message?.includes("aborted")) {
+        throw new Error(
+          `Connection timed out (${this.timeoutMs}ms) reaching ${this.url}. The server took too long to respond.`
+        );
+      }
+
+      throw new Error(
+        `Failed to reach MCP server at ${this.url}: ${err.cause?.message || err.message || "Network error"}`
+      );
+    }
 
       if (!res.ok) {
         let detail = "";
@@ -96,8 +130,21 @@ export class McpClient {
         serverName: result.serverInfo?.name || "MCP Server",
         version: result.serverInfo?.version,
       };
-    } catch {
-      // Some simple HTTP MCP servers don't require initialize, proceed gracefully
+    } catch (error) {
+      // Propagate network and HTTP errors
+      const message = error instanceof Error ? error.message : "";
+      if (
+        message.includes("Connection refused") ||
+        message.includes("Failed to reach") ||
+        message.includes("timed out") ||
+        message.includes("HTTP 401") ||
+        message.includes("HTTP 403") ||
+        message.includes("HTTP 4") ||
+        message.includes("HTTP 5")
+      ) {
+        throw error;
+      }
+      // If the server doesn't implement or require 'initialize', proceed gracefully
       return { serverName: "MCP Server" };
     }
   }

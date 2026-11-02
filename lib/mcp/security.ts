@@ -17,6 +17,16 @@ export function validateMcpUrl(rawUrl: string): { valid: boolean; error?: string
     return { valid: false, error: "Only HTTP and HTTPS protocols are allowed for MCP servers." };
   }
 
+  const isLoopback =
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "127.0.0.1" ||
+    parsed.hostname === "::1";
+
+  // Allow local bridges during development or when explicitly enabled
+  if (isLoopback && (process.env.NODE_ENV === "development" || process.env.ALLOW_LOCAL_MCP === "true")) {
+    return { valid: true, url: parsed };
+  }
+
   if (!isPublicNetworkDestination(parsed.hostname)) {
     return {
       valid: false,

@@ -269,7 +269,7 @@ export function BotDialog({
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerNode && <DialogTrigger render={triggerNode} />}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[480px] sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[520px] sm:max-w-[520px] max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{isEditing ? "Edit bot" : "New bot"}</DialogTitle>
             <DialogDescription>
@@ -391,7 +391,7 @@ export function BotDialog({
               </form>
             </>
           ) : (
-            <div className="py-1">
+            <div className="py-1 w-full min-w-0">
               <McpSettings
                 botId={initialBot?.id}
                 botName={initialBot?.name ?? watchName}
