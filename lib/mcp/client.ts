@@ -9,23 +9,24 @@ import type {
   McpToolCallResult,
 } from "./types";
 
-// Patterns for low-value administrative endpoints or low-level primitives that add token bloat
+// Patterns for low-value administrative endpoints or low-level recursive primitives that add token bloat
 const LOW_PRIORITY_TOOL_PATTERNS = [
-  /get-self/i,
-  /get-users?/i,
-  /retrieve-a-comment/i,
-  /create-a-comment/i,
-  /data-source-templates/i,
-  /create-a-data-source/i,
-  /retrieve-a-data-source/i,
-  /update-a-data-source/i,
-  /move-page/i,
-  /retrieve-a-block/i,
-  /update-a-block/i,
-  /delete-a-block/i,
-  /retrieve-a-page-property/i,
-  /get-block-children/i,
-  /patch-block-children/i,
+  /get-?self/i,
+  /get-?users?/i,
+  /list-?users?/i,
+  /retrieve-?a-?comment/i,
+  /create-?a-?comment/i,
+  /data-?source-?templates/i,
+  /create-?a-?data-?source/i,
+  /retrieve-?a-?data-?source/i,
+  /update-?a-?data-?source/i,
+  /move-?page/i,
+  /retrieve-?a-?block/i,
+  /update-?a-?block/i,
+  /delete-?a-?block/i,
+  /retrieve-?a-?page-?property/i,
+  /get-?block-?children/i,
+  /patch-?block-?children/i,
 ];
 
 function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
@@ -39,7 +40,7 @@ function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
 
     const res: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-      if (k === "$defs" || k === "definitions" || k === "$schema") continue;
+      if (k === "$defs" || k === "definitions" || k === "$schema" || k === "format") continue;
       if (k === "$ref") {
         res["type"] = "object";
         continue;
@@ -232,7 +233,7 @@ export class McpClient {
         textOutput = JSON.stringify(result, null, 2);
       }
 
-      const sanitized = sanitizeMcpOutput(textOutput);
+      const sanitized = sanitizeMcpOutput(textOutput, 1500);
       return {
         success: !result?.isError,
         output: sanitized || "(Tool completed with empty output)",

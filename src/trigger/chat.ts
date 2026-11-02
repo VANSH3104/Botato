@@ -480,11 +480,16 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructionsList.push(
         `CONNECTED APPS & MCP TOOLS:`,
         `You have direct access to active external MCP tools (${Object.keys(mcpTools).join(", ")}).`,
-        `CRITICAL RULES FOR CONNECTED TOOLS:`,
+        `CRITICAL RULES FOR CONNECTED TOOLS & LONG TASKS:`,
         `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens, secret keys, or credentials in chat.`,
-        `2. When asked to create, find, list, or update items in Notion or any connected service, call the appropriate tool directly (e.g. use search tools first to find target pages or databases, then call creation or update tools).`,
-        `3. Execute actions immediately with your tools instead of telling the user how to do it manually.`,
-        `4. To inspect, view, or read the sections and contents of a Notion page, search for the page first, then ALWAYS call mcp_API-retrieve-page-markdown with page_id to get all sections in a single fast call.`
+        `2. Execute actions immediately with your tools instead of telling the user how to do it manually.`,
+        `3. Efficient Long Work Execution: When performing multi-step tasks across connected tools (such as searching, batch reading, updating, or deleting items):`,
+        `   - Step 1: Use discovery or search tools first to obtain exact IDs and current state.`,
+        `   - Step 2: Prefer consolidated, bulk, or markdown/summary retrieval endpoints rather than recursive item-by-item loops.`,
+        `   - Step 3: Execute target creation, update, or deletion calls directly using the discovered IDs.`,
+        `4. ID and URL Handling: When tools require IDs, use the exact resource identifier (or collection/data source ID), never display or block URLs.`,
+        `5. Non-Destructive Reset: When asked to clear or reset project or task records without deleting schemas or containers, query existing rows or items and archive/delete the records while leaving the parent database or structure intact.`,
+        `6. Always synthesize results into a final helpful status update when tools finish.`
       );
     }
 
