@@ -68,6 +68,7 @@ export async function getBots(userIdOverride?: string): Promise<BotWithLastChat[
       job: "Group Chat",
       instructions: null,
       sandboxId: null,
+      memory: null,
       createdAt: g.createdAt,
       isGroup: true,
       bots: members,

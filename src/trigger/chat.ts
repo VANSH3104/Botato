@@ -6,7 +6,7 @@ import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { bots, groupChats, groupChatMembers } from "@/lib/db/schema";
 import { sandboxTools } from "@/lib/sandbox/tools";
-import { ensureBotSandbox, readBotMemory } from "@/lib/sandbox/memory";
+import { ensureBotSandbox, readBotMemory, saveBotMemory } from "@/lib/sandbox/memory";
 import { getActiveMcpTools } from "@/lib/mcp/resolver";
 
 export const chatAgent = chat.agent({
@@ -232,9 +232,7 @@ export const chatAgent = chat.agent({
             name: m.name,
             sandboxId: m.sandboxId,
           });
-          if (sId) {
-            mem = await readBotMemory(sId);
-          }
+          mem = await readBotMemory(m.id, sId);
         } catch (e) {
           console.error(`Failed to ensure memory for ${m.name}:`, e);
         }
@@ -247,7 +245,7 @@ export const chatAgent = chat.agent({
     const botInstructions = activeBot?.instructions || (typeof data.botInstructions === "string" ? data.botInstructions.trim() : "");
     const activeBotId = activeBot?.id || chatId || "botato";
 
-    // Ensure active bot has a persistent sandbox and read its MEMORY.md
+    // Ensure active bot has a persistent sandbox and read its memory
     let activeSandboxId = activeBot?.sandboxId || null;
     let memoryContent: string | null = null;
 
@@ -258,9 +256,7 @@ export const chatAgent = chat.agent({
           name: activeBot.name,
           sandboxId: activeBot.sandboxId,
         });
-        if (activeSandboxId) {
-          memoryContent = await readBotMemory(activeSandboxId);
-        }
+        memoryContent = await readBotMemory(activeBot.id, activeSandboxId);
       } catch (err) {
         console.error("Failed to ensure bot sandbox / memory:", err);
       }
@@ -306,9 +302,7 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
             name: peer.name,
             sandboxId: peer.sandboxId,
           });
-          if (sId) {
-            peerMemory = await readBotMemory(sId);
-          }
+          peerMemory = await readBotMemory(peer.id, sId);
         } catch (e) {
           console.error(`Failed to load memory for peer ${peer.name}:`, e);
         }
@@ -355,7 +349,26 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
       });
     }
 
+    const updateMemoryTool = tool({
+      description: "Save or update important context, user preferences, workspace settings, project IDs, or facts in your permanent memory so you remember them in future conversations.",
+      inputSchema: z.object({
+        memory: z.string().describe("The comprehensive markdown notes to record in your permanent memory."),
+      }),
+      execute: async ({ memory }) => {
+        try {
+          await saveBotMemory(activeBotId, memory, activeSandboxId);
+          return { success: true, message: "Memory saved successfully." };
+        } catch (err) {
+          return {
+            success: false,
+            error: err instanceof Error ? err.message : "Failed to save memory",
+          };
+        }
+      },
+    });
+
     const activeTools = {
+      updateMemory: updateMemoryTool,
       ...(activeSandboxId ? sandboxTools : {}),
       ...(isGroup ? { consultBot: consultBotTool } : {}),
       ...mcpTools,
@@ -452,18 +465,25 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructionsList.push(
         `PERSISTENT MEMORY & SANDBOX:`,
         `Your persistent sandbox ID is "${activeSandboxId}". You have access to sandbox tools (executeCommand, writeFile, readFile, listFiles, browseWeb). When using sandbox tools, always pass sandboxId: "${activeSandboxId}".`,
-        `You have a persistent file called "MEMORY.md" in your sandbox workspace.`,
+        `You have persistent memory notes recorded.`,
         memoryContent
-          ? `Current contents of MEMORY.md:\n"""\n${memoryContent.slice(0, 800)}\n"""`
-          : `MEMORY.md currently has no entries.`,
+          ? `Current contents of persistent memory:\n"""\n${memoryContent.slice(0, 1000)}\n"""`
+          : `Persistent memory currently has no entries.`,
         `CRITICAL AUTONOMOUS MEMORY INSTRUCTIONS:
-- PROACTIVE NOTE-TAKING: Whenever the user mentions personal details, project updates, preferences, or pending tasks, update "MEMORY.md" using \`writeFile\` in the background. Keep notes organized and concise.
-- AUTOMATIC RECALL: Seamlessly apply facts from MEMORY.md above into your answers without needing to be asked.
-- CROSS-CHAT RECALL: Your MEMORY.md is persistent across 1:1 and group chats.`
+- PROACTIVE NOTE-TAKING: Whenever the user mentions personal details, project updates, workspace setups, or pending tasks, call \`updateMemory\` or use \`writeFile\` in the background. Keep notes organized and concise.
+- AUTOMATIC RECALL: Seamlessly apply facts from persistent memory above into your answers without needing to be asked.
+- CROSS-CHAT RECALL: Your memory is persistent across 1:1 and group chats.`
       );
     } else {
       instructionsList.push(
-        `You have access to an execution sandbox. When appropriate, use sandbox tools (executeCommand, writeFile, readFile, listFiles, browseWeb) to complete tasks requested by the user within your role. Keep commands concise.`
+        `PERSISTENT BOT MEMORY:`,
+        memoryContent
+          ? `Current contents of your permanent memory:\n"""\n${memoryContent.slice(0, 1000)}\n"""`
+          : `Your permanent memory currently has no entries.`,
+        `CRITICAL AUTONOMOUS MEMORY INSTRUCTIONS:
+- PROACTIVE NOTE-TAKING: Whenever the user asks you to remember facts, workspace setups, database IDs, or instructions for future tasks, ALWAYS call the \`updateMemory\` tool with the updated markdown notes.
+- AUTOMATIC RECALL: Seamlessly apply facts from your permanent memory above into your answers without asking the user again.
+- PERSISTENCE: Your memory is saved permanently in the database and recalled across all future chats.`
       );
     }
 
@@ -483,13 +503,13 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         `CRITICAL RULES FOR CONNECTED TOOLS & LONG TASKS:`,
         `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens, secret keys, or credentials in chat.`,
         `2. Execute actions immediately with your tools instead of telling the user how to do it manually.`,
-        `3. Efficient Long Work Execution: When performing multi-step tasks across connected tools (such as searching, batch reading, updating, or deleting items):`,
-        `   - Step 1: Use discovery or search tools first to obtain exact IDs and current state.`,
-        `   - Step 2: Prefer consolidated, bulk, or markdown/summary retrieval endpoints rather than recursive item-by-item loops.`,
-        `   - Step 3: Execute target creation, update, or deletion calls directly using the discovered IDs.`,
-        `4. ID and URL Handling: When tools require IDs, use the exact resource identifier (or collection/data source ID), never display or block URLs.`,
-        `5. Non-Destructive Reset: When asked to clear or reset project or task records without deleting schemas or containers, query existing rows or items and archive/delete the records while leaving the parent database or structure intact.`,
-        `6. Always synthesize results into a final helpful status update when tools finish.`
+        `3. Database & Project Long Tasks:`,
+        `   - Step 1 (Find True Database ID): When asked to query or manage a named database (e.g. 'projects' database), call mcp_API-post-search with query: "projects" or filter by data_source to obtain the true database collection ID (e.g. 1f081cc1-9dcd-81df-86d1-000b8aa82b59).`,
+        `   - NEVER use page view links (e.g. https://app.notion.com/p/... or view block IDs) as the data_source_id in mcp_API-query-data-source. Notion rejects them with "Could not find data_source". Only use the actual collection/database ID found via search.`,
+        `   - Step 2 (Query Rows): Call mcp_API-query-data-source with the database ID to list all current items.`,
+        `   - Step 3 (Non-Destructive Reset): If the user asks to delete or clear project items/data so they can start new tasks, DO NOT delete the database container. Instead, call mcp_API-patch-page for each item row with in_trash: true to archive existing rows safely.`,
+        `   - Step 4 (Permanent Memory): When the user says to remember the workspace or database ID, call updateMemory with the database ID and workspace notes.`,
+        `   - Step 5 (Final Synthesis): Synthesize the result and list the archived items clearly in your final response.`
       );
     }
 
@@ -614,7 +634,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       messages: compactMessages as typeof messages,
       tools: activeTools,
       maxOutputTokens: 1024,
-      stopWhen: [isStepCount(6)],
+      stopWhen: [isStepCount(10)],
       abortSignal: signal,
     });
   },

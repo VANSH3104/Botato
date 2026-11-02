@@ -17,6 +17,7 @@ export const bots = pgTable(
     job: text("job"),
     instructions: text("instructions"),
     sandboxId: text("sandbox_id"),
+    memory: text("memory"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [index("bots_user_id_idx").on(table.userId)],
@@ -37,6 +38,7 @@ export const createBotInputSchema = insertBotSchema
     userId: true,
     createdAt: true,
     sandboxId: true,
+    memory: true,
   })
   .extend({
     name: z.string().trim().min(1, "Name is required"),
