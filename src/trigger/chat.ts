@@ -1,6 +1,6 @@
 import { chat, defaultStorage } from "@trigger.dev/sdk/ai";
 import { groq } from "@ai-sdk/groq";
-import { isStepCount, tool, generateText, type ToolSet } from "ai";
+import { isStepCount, tool, generateText, wrapLanguageModel, type ToolSet } from "ai";
 import { z } from "zod";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
@@ -8,6 +8,52 @@ import { bots, groupChats, groupChatMembers } from "@/lib/db/schema";
 import { sandboxTools } from "@/lib/sandbox/tools";
 import { ensureBotSandbox, readBotMemory, saveBotMemory } from "@/lib/sandbox/memory";
 import { getActiveMcpTools } from "@/lib/mcp/resolver";
+
+function createResilientModel(primaryName: string) {
+  const models = [
+    primaryName,
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+  ].filter((v, i, a) => a.indexOf(v) === i);
+
+  return wrapLanguageModel({
+    model: groq(models[0]),
+    middleware: {
+      wrapStream: async ({ doStream, params }) => {
+        try {
+          return await doStream();
+        } catch (err) {
+          console.warn(`Primary model ${models[0]} failed, executing fallback:`, (err as Error)?.message);
+          for (let i = 1; i < models.length; i++) {
+            try {
+              console.log(`Executing fallback model: ${models[i]}`);
+              return await groq(models[i]).doStream(params);
+            } catch (fallbackErr) {
+              console.warn(`Fallback ${models[i]} failed:`, (fallbackErr as Error)?.message);
+            }
+          }
+          throw err;
+        }
+      },
+      wrapGenerate: async ({ doGenerate, params }) => {
+        try {
+          return await doGenerate();
+        } catch (err) {
+          console.warn(`Primary model ${models[0]} failed, executing fallback:`, (err as Error)?.message);
+          for (let i = 1; i < models.length; i++) {
+            try {
+              console.log(`Executing fallback model: ${models[i]}`);
+              return await groq(models[i]).doGenerate(params);
+            } catch (fallbackErr) {
+              console.warn(`Fallback ${models[i]} failed:`, (fallbackErr as Error)?.message);
+            }
+          }
+          throw err;
+        }
+      },
+    },
+  });
+}
 
 export const chatAgent = chat.agent({
   id: "chat-agent",
@@ -309,7 +355,7 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
 
         try {
           const peerResponse = await generateText({
-            model: groq(modelName),
+            model: createResilientModel(modelName),
             instructions: [
               `Your name is "${peer.name}". You are an AI assistant participating in a group chat.`,
               `Your designated job / profession: ${peer.job || "Helpful assistant"}.`,
@@ -625,7 +671,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       : modelName;
 
     return streamText({
-      model: groq(activeModel),
+      model: createResilientModel(activeModel),
       instructions,
       messages: compactMessages as typeof messages,
       tools: activeTools,
