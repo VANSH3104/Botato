@@ -9,7 +9,7 @@ import type {
   McpToolCallResult,
 } from "./types";
 
-// Patterns for low-value administrative endpoints that add token bloat
+// Patterns for low-value administrative endpoints or low-level primitives that add token bloat
 const LOW_PRIORITY_TOOL_PATTERNS = [
   /get-self/i,
   /get-users?/i,
@@ -20,6 +20,10 @@ const LOW_PRIORITY_TOOL_PATTERNS = [
   /retrieve-a-data-source/i,
   /update-a-data-source/i,
   /move-page/i,
+  /retrieve-a-block/i,
+  /update-a-block/i,
+  /delete-a-block/i,
+  /retrieve-a-page-property/i,
 ];
 
 function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {

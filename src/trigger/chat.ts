@@ -356,7 +356,7 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
     }
 
     const activeTools = {
-      ...sandboxTools,
+      ...(activeSandboxId ? sandboxTools : {}),
       ...(isGroup ? { consultBot: consultBotTool } : {}),
       ...mcpTools,
     };
@@ -489,8 +489,8 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
 
     const instructions = instructionsList.join("\n\n");
 
-    // Window history to the latest 4 messages to stay strictly within Groq's 8,000 TPM limit
-    const MAX_WINDOW = 4;
+    // Window history to the latest 3 messages to stay strictly within Groq's 8,000 TPM limit
+    const MAX_WINDOW = 3;
     let windowedMessages = messages.length > MAX_WINDOW ? messages.slice(-MAX_WINDOW) : messages;
 
     // Avoid starting with an orphaned tool message in the sliding window
@@ -501,12 +501,12 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       windowedMessages = windowedMessages.slice(1);
     }
 
-    // Compact history aggressively: cap prior text to 300 chars and tool results tightly
+    // Compact history aggressively: cap prior text to 250 chars and tool results tightly
     const compactMessages = windowedMessages.map((msg, index) => {
       const isLatestUser = index === windowedMessages.length - 1 && msg.role === "user";
 
       if (typeof msg.content === "string") {
-        const maxLen = isLatestUser ? 800 : 300;
+        const maxLen = isLatestUser ? 600 : 250;
         if (msg.content.length > maxLen) {
           return { ...msg, content: msg.content.slice(0, maxLen) + "\n...[truncated]" };
         }
@@ -517,7 +517,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         const compactedParts = msg.content.map((part) => {
           const p = part as Record<string, unknown>;
           if (p.type === "text" && typeof p.text === "string") {
-            const maxLen = isLatestUser ? 800 : 300;
+            const maxLen = isLatestUser ? 600 : 250;
             if (p.text.length > maxLen) {
               return { ...p, text: p.text.slice(0, maxLen) + "\n...[truncated]" };
             }
@@ -607,7 +607,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructions,
       messages: compactMessages as typeof messages,
       tools: activeTools,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 1024,
       stopWhen: [isStepCount(12)],
       abortSignal: signal,
     });
