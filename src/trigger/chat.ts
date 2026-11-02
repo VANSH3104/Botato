@@ -488,7 +488,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
     }
 
     instructionsList.push(
-      `CRITICAL COMPLETION REQUIREMENT: You must ALWAYS provide a complete, final helpful response to the user with actual answers, recommendations, links, or code. NEVER stop at an intermediate sentence like "Let me check..." or "Let me try...". If tools have executed, synthesize the findings immediately into a thorough final response for the user. Do not chatter apologies or internal stream-of-consciousness between tool calls.`,
+      `CRITICAL COMPLETION REQUIREMENT: You must ALWAYS provide a complete, final helpful response to the user with actual answers, recommendations, links, or code. NEVER stop after tool executions without outputting a conversational message. Once your tools finish, your NEXT output MUST be your thorough final response explaining what you did, which items were archived, and what was saved to memory. Do not chatter apologies or internal stream-of-consciousness between tool calls.`,
       `NATURAL HUMAN CONVERSATIONAL STYLE:
 - Talk like a real, thoughtful human colleague in chat — engaging, natural, and direct.
 - DO NOT format regular conversation into robotic bullet point lists. Use fluid paragraphs and natural prose for your commentary, thoughts, and advice.
@@ -509,7 +509,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         `   - Step 2 (Query Rows): Call mcp_API-query-data-source with the database ID to list all current items.`,
         `   - Step 3 (Non-Destructive Reset): If the user asks to delete or clear project items/data so they can start new tasks, DO NOT delete the database container. Instead, call mcp_API-patch-page for each item row with in_trash: true to archive existing rows safely.`,
         `   - Step 4 (Permanent Memory): When the user says to remember the workspace or database ID, call updateMemory with the database ID and workspace notes.`,
-        `   - Step 5 (Final Synthesis): Synthesize the result and list the archived items clearly in your final response.`
+        `   - Step 5 (Immediate Final Synthesis): After calling patch-page and updateMemory, STOP calling tools immediately. DO NOT call search or query again to verify. Deliver your complete final response directly in natural text.`
       );
     }
 
@@ -630,7 +630,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       messages: compactMessages as typeof messages,
       tools: activeTools,
       maxOutputTokens: 512,
-      stopWhen: [isStepCount(6)],
+      stopWhen: [isStepCount(8)],
       abortSignal: signal,
     });
   },
