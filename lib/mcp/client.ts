@@ -14,8 +14,10 @@ const LOW_PRIORITY_TOOL_PATTERNS = [
   /get-?self/i,
   /get-?users?/i,
   /list-?users?/i,
+  /retrieve-?a-?user/i,
   /retrieve-?a-?comment/i,
   /create-?a-?comment/i,
+  /post-?comment/i,
   /data-?source-?templates/i,
   /create-?a-?data-?source/i,
   /retrieve-?a-?data-?source/i,
@@ -29,18 +31,35 @@ const LOW_PRIORITY_TOOL_PATTERNS = [
   /patch-?block-?children/i,
 ];
 
-function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
+function sanitizeSchemaForLlm(raw: unknown, maxDepth: number = 3): Record<string, unknown> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return { type: "object", properties: {} };
   }
 
-  function cleanNode(node: unknown): unknown {
+  function cleanNode(node: unknown, depth = 0): unknown {
     if (!node || typeof node !== "object") return node;
-    if (Array.isArray(node)) return node.map(cleanNode);
+    if (Array.isArray(node)) {
+      if (depth >= maxDepth) return [];
+      return node.slice(0, 3).map((item) => cleanNode(item, depth + 1));
+    }
+
+    if (depth >= maxDepth) {
+      const type = (node as Record<string, unknown>).type;
+      return { type: typeof type === "string" ? type : "object" };
+    }
 
     const res: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-      if (k === "$defs" || k === "definitions" || k === "$schema" || k === "format") continue;
+      if (
+        k === "$defs" ||
+        k === "definitions" ||
+        k === "$schema" ||
+        k === "format" ||
+        k === "examples" ||
+        k === "default"
+      ) {
+        continue;
+      }
       if (k === "$ref") {
         res["type"] = "object";
         continue;
@@ -48,18 +67,18 @@ function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
       if (typeof v === "object" && v !== null && "$ref" in (v as Record<string, unknown>)) {
         res[k] = { type: "object" };
       } else {
-        res[k] = cleanNode(v);
+        res[k] = cleanNode(v, depth + 1);
       }
     }
 
-    if (typeof res.description === "string" && res.description.length > 80) {
-      res.description = res.description.slice(0, 80) + "...";
+    if (typeof res.description === "string" && res.description.length > 60) {
+      res.description = res.description.slice(0, 60) + "...";
     }
 
     return res;
   }
 
-  const result = cleanNode(raw) as Record<string, unknown>;
+  const result = cleanNode(raw, 0) as Record<string, unknown>;
   if (!result.type) {
     result.type = "object";
   }
@@ -254,11 +273,8 @@ export class McpClient {
     const tools = await this.listTools();
     const sdkTools: ToolSet = {};
 
-    // Filter out low-value admin noise if the server exports an excessive number of tools
-    const targetTools =
-      tools.length > 12
-        ? tools.filter((t) => !LOW_PRIORITY_TOOL_PATTERNS.some((p) => p.test(t.name)))
-        : tools;
+    // Filter out low-value admin noise to prevent token bloat
+    const targetTools = tools.filter((t) => !LOW_PRIORITY_TOOL_PATTERNS.some((p) => p.test(t.name)));
 
     for (const mcpTool of targetTools) {
       const toolName = mcpTool.name;

@@ -9,43 +9,80 @@ import { sandboxTools } from "@/lib/sandbox/tools";
 import { ensureBotSandbox, readBotMemory, saveBotMemory } from "@/lib/sandbox/memory";
 import { getActiveMcpTools } from "@/lib/mcp/resolver";
 
+const modelCooldowns = new Map<string, number>();
+
+function isCooldownActive(model: string): boolean {
+  return (modelCooldowns.get(model) || 0) > Date.now();
+}
+
+function applyErrorCooldown(model: string, errMsg: string) {
+  if (/tokens per day|TPD/i.test(errMsg)) {
+    modelCooldowns.set(model, Date.now() + 30 * 60 * 1000); // 30 min daily cooldown
+  } else if (/tokens per minute|TPM|ITPM|rate limit|429/i.test(errMsg)) {
+    modelCooldowns.set(model, Date.now() + 25 * 1000); // 25s per-minute cooldown
+  }
+}
+
 function createResilientModel(primaryName: string) {
-  const models = [
+  const candidateModels = [
     primaryName,
+    "llama-3.3-70b-versatile",
     "qwen/qwen3.8-27b",
     "openai/gpt-oss-20b",
+    "llama-3.1-8b-instant",
   ].filter((v, i, a) => a.indexOf(v) === i);
 
+  // Pick the first candidate model not currently cooling down
+  const initialModel = candidateModels.find((m) => !isCooldownActive(m)) || candidateModels[0];
+
   return wrapLanguageModel({
-    model: groq(models[0]),
+    model: groq(initialModel),
     middleware: {
       wrapStream: async ({ doStream, params }) => {
+        const activeModel = initialModel;
         try {
           return await doStream();
         } catch (err) {
-          console.warn(`Primary model ${models[0]} failed, executing fallback:`, (err as Error)?.message);
-          for (let i = 1; i < models.length; i++) {
+          const errMsg = (err as Error)?.message || "";
+          console.warn(`Model ${activeModel} failed:`, errMsg);
+          applyErrorCooldown(activeModel, errMsg);
+
+          for (const fallback of candidateModels) {
+            if (fallback === activeModel) continue;
+            if (isCooldownActive(fallback)) continue;
+
             try {
-              console.log(`Executing fallback model: ${models[i]}`);
-              return await groq(models[i]).doStream(params);
+              console.log(`Executing fallback model: ${fallback}`);
+              return await groq(fallback).doStream(params);
             } catch (fallbackErr) {
-              console.warn(`Fallback ${models[i]} failed:`, (fallbackErr as Error)?.message);
+              const fbMsg = (fallbackErr as Error)?.message || "";
+              console.warn(`Fallback ${fallback} failed:`, fbMsg);
+              applyErrorCooldown(fallback, fbMsg);
             }
           }
           throw err;
         }
       },
       wrapGenerate: async ({ doGenerate, params }) => {
+        const activeModel = initialModel;
         try {
           return await doGenerate();
         } catch (err) {
-          console.warn(`Primary model ${models[0]} failed, executing fallback:`, (err as Error)?.message);
-          for (let i = 1; i < models.length; i++) {
+          const errMsg = (err as Error)?.message || "";
+          console.warn(`Model ${activeModel} failed:`, errMsg);
+          applyErrorCooldown(activeModel, errMsg);
+
+          for (const fallback of candidateModels) {
+            if (fallback === activeModel) continue;
+            if (isCooldownActive(fallback)) continue;
+
             try {
-              console.log(`Executing fallback model: ${models[i]}`);
-              return await groq(models[i]).doGenerate(params);
+              console.log(`Executing fallback model: ${fallback}`);
+              return await groq(fallback).doGenerate(params);
             } catch (fallbackErr) {
-              console.warn(`Fallback ${models[i]} failed:`, (fallbackErr as Error)?.message);
+              const fbMsg = (fallbackErr as Error)?.message || "";
+              console.warn(`Fallback ${fallback} failed:`, fbMsg);
+              applyErrorCooldown(fallback, fbMsg);
             }
           }
           throw err;
@@ -546,16 +583,17 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructionsList.push(
         `CONNECTED APPS & MCP TOOLS:`,
         `You have direct access to active external MCP tools (${Object.keys(mcpTools).join(", ")}).`,
-        `CRITICAL RULES FOR CONNECTED TOOLS & LONG TASKS:`,
-        `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens, secret keys, or credentials in chat.`,
-        `2. Execute actions immediately with your tools instead of telling the user how to do it manually.`,
-        `3. Database & Project Long Tasks:`,
-        `   - Step 1 (Find True Database ID): When asked to query or manage a named database (e.g. 'projects' database), call mcp_API-post-search with query: "projects" or filter by data_source to obtain the true database collection ID (e.g. 1f081cc1-9dcd-81df-86d1-000b8aa82b59).`,
-        `   - NEVER use page view links (e.g. https://app.notion.com/p/... or view block IDs) as the data_source_id in mcp_API-query-data-source. Notion rejects them with "Could not find data_source". Only use the actual collection/database ID found via search.`,
-        `   - Step 2 (Query Rows): Call mcp_API-query-data-source with the database ID to list all current items.`,
-        `   - Step 3 (Non-Destructive Reset): If the user asks to delete or clear project items/data so they can start new tasks, DO NOT delete the database container. Instead, call mcp_API-patch-page for each item row with in_trash: true to archive existing rows safely.`,
-        `   - Step 4 (Permanent Memory): When the user says to remember the workspace or database ID, call updateMemory with the database ID and workspace notes.`,
-        `   - Step 5 (Immediate Final Synthesis): After calling patch-page and updateMemory, STOP calling tools immediately. DO NOT call search or query again to verify. Deliver your complete final response directly in natural text.`
+        `CRITICAL RULES FOR CONNECTED TOOLS & WORKSPACE TASKS:`,
+        `1. Authentication is ALREADY configured and verified on the server. NEVER ask the user for API tokens or credentials in chat.`,
+        `2. Direct Execution: Always execute actions immediately using your tools instead of telling the user to do it manually.`,
+        `3. Using Known Database IDs: If a database ID (such as Tasks, Projects, Sprints, Notes) is already recorded in your persistent memory above, USE IT DIRECTLY. Do NOT call post-search or updateMemory when creating or querying items.`,
+        `4. Creating Tasks & Pages: To add tasks, projects, or items to a Notion database, call mcp_API-post-page with:
+   - parent: { "database_id": "<database_id>" }
+   - properties: { "Task name": { "title": [{ "text": { "content": "<Task Title>" } }] } } (or use "Name" or "Project name" matching the database schema).
+   - When the user asks to add multiple tasks or items, create all requested items sequentially using post-page calls. Do not stop halfway.`,
+        `5. Archiving / Resetting: To archive or clear existing items, call mcp_API-patch-page for each item row with in_trash: true. Never delete database containers.`,
+        `6. Memory Updates: Only call updateMemory when the user explicitly asks you to remember new workspace layout information, preferences, or rules permanently. Do NOT call updateMemory during regular task creation.`,
+        `7. Immediate Conversational Synthesis: When your actions (such as creating tasks or archiving rows) are completed, STOP calling tools and deliver a clear, friendly confirmation summarizing the exact items created or updated.`
       );
     }
 
