@@ -14,7 +14,7 @@ export const chatAgent = chat.agent({
   storage: defaultStorage,
   tools: sandboxTools,
   run: async ({ messages, signal, streamText, clientData, chatId }) => {
-    const modelName = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
+    const modelName = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
     const data = (clientData ?? {}) as Record<string, unknown>;
 
     let isGroup = Boolean(data.isGroup);
@@ -326,7 +326,7 @@ Call this tool directly as a function. DO NOT run this in bash or executeCommand
               .filter(Boolean)
               .join("\n\n"),
             prompt: query,
-            maxOutputTokens: 800,
+            maxOutputTokens: 1500,
             abortSignal: signal,
           });
 
@@ -607,7 +607,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       instructions,
       messages: compactMessages as typeof messages,
       tools: activeTools,
-      maxOutputTokens: 800,
+      maxOutputTokens: 3000,
       stopWhen: [isStepCount(12)],
       abortSignal: signal,
     });
