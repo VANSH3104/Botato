@@ -9,6 +9,56 @@ import type {
   McpToolCallResult,
 } from "./types";
 
+// Patterns for low-value administrative endpoints that add token bloat
+const LOW_PRIORITY_TOOL_PATTERNS = [
+  /get-self/i,
+  /get-users?/i,
+  /retrieve-a-comment/i,
+  /create-a-comment/i,
+  /data-source-templates/i,
+  /create-a-data-source/i,
+  /retrieve-a-data-source/i,
+  /update-a-data-source/i,
+  /move-page/i,
+];
+
+function sanitizeSchemaForLlm(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { type: "object", properties: {} };
+  }
+
+  function cleanNode(node: unknown): unknown {
+    if (!node || typeof node !== "object") return node;
+    if (Array.isArray(node)) return node.map(cleanNode);
+
+    const res: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
+      if (k === "$defs" || k === "definitions" || k === "$schema") continue;
+      if (k === "$ref") {
+        res["type"] = "object";
+        continue;
+      }
+      if (typeof v === "object" && v !== null && "$ref" in (v as Record<string, unknown>)) {
+        res[k] = { type: "object" };
+      } else {
+        res[k] = cleanNode(v);
+      }
+    }
+
+    if (typeof res.description === "string" && res.description.length > 150) {
+      res.description = res.description.slice(0, 150) + "...";
+    }
+
+    return res;
+  }
+
+  const result = cleanNode(raw) as Record<string, unknown>;
+  if (!result.type) {
+    result.type = "object";
+  }
+  return result;
+}
+
 export class McpClient {
   private url: string;
   private headers: Record<string, string>;
@@ -197,13 +247,20 @@ export class McpClient {
     const tools = await this.listTools();
     const sdkTools: ToolSet = {};
 
-    for (const mcpTool of tools) {
+    // Filter out low-value admin noise if the server exports an excessive number of tools
+    const targetTools =
+      tools.length > 12
+        ? tools.filter((t) => !LOW_PRIORITY_TOOL_PATTERNS.some((p) => p.test(t.name)))
+        : tools;
+
+    for (const mcpTool of targetTools) {
       const toolName = mcpTool.name;
       const description = mcpTool.description || `Execute ${toolName} via MCP.`;
 
+      const cleanedSchema = sanitizeSchemaForLlm(mcpTool.inputSchema);
       const inputSchema =
-        mcpTool.inputSchema && typeof mcpTool.inputSchema === "object" && Object.keys(mcpTool.inputSchema).length > 0
-          ? jsonSchema<Record<string, unknown>>(mcpTool.inputSchema as Parameters<typeof jsonSchema>[0])
+        cleanedSchema && Object.keys(cleanedSchema).length > 0
+          ? jsonSchema<Record<string, unknown>>(cleanedSchema as Parameters<typeof jsonSchema>[0])
           : z.record(z.string(), z.unknown());
 
       sdkTools[`mcp_${toolName}`] = tool({
