@@ -120,6 +120,36 @@ export function condenseMcpPayload(raw: string, toolName: string = ""): string {
       });
     }
 
+    // Single page response: condense to title, id, and property names
+    if (data && data.object === "page") {
+      let title: string | undefined = undefined;
+      const props = (data.properties || {}) as Record<string, Record<string, unknown>>;
+      for (const p of Object.values(props)) {
+        if (p.type === "title" && Array.isArray(p.title) && p.title[0]?.plain_text) {
+          title = p.title[0].plain_text;
+          break;
+        }
+      }
+      return JSON.stringify({
+        id: data.id,
+        title,
+        property_names: Object.keys(props),
+        in_trash: data.in_trash ?? undefined,
+      });
+    }
+
+    // Single database response: condense to title, id, and property names
+    if (data && data.object === "database") {
+      const props = (data.properties || {}) as Record<string, Record<string, unknown>>;
+      const rawTitle = data.title;
+      const title = Array.isArray(rawTitle) && rawTitle[0]?.plain_text ? rawTitle[0].plain_text : undefined;
+      return JSON.stringify({
+        id: data.id,
+        title,
+        property_names: Object.keys(props),
+      });
+    }
+
     // List/query responses containing an array of items (e.g. results, items, data)
     const list = Array.isArray(data)
       ? data
