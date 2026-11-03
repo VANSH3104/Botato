@@ -592,8 +592,18 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
    - properties: { "Task name": { "title": [{ "text": { "content": "<Task Title>" } }] } } (or use "Name" or "Project name" matching the database schema).
    - When the user asks to add multiple tasks or items, create all requested items sequentially using post-page calls. Do not stop halfway.`,
         `5. Archiving / Resetting: To archive or clear existing items, call mcp_API-patch-page for each item row with in_trash: true. Never delete database containers.`,
-        `6. Memory Updates: Only call updateMemory when the user explicitly asks you to remember new workspace layout information, preferences, or rules permanently. Do NOT call updateMemory during regular task creation.`,
-        `7. Immediate Conversational Synthesis: When your actions (such as creating tasks or archiving rows) are completed, STOP calling tools and deliver a clear, friendly confirmation summarizing the exact items created or updated.`
+        `6. Memory Updates: Only call updateMemory when the user explicitly asks you to remember new workspace layout information, preferences, or rules permanently. Do NOT call updateMemory during regular task creation or queries.`,
+        `7. Immediate Conversational Synthesis: When your actions (such as creating tasks, querying, or archiving rows) are completed, STOP calling tools and deliver a clear, friendly confirmation summarizing the exact items created or updated.`,
+        `8. Listing Databases: To discover or list all databases in Notion, call mcp_API-post-search with:
+   - filter: { "value": "data_source", "property": "object" }
+   In Notion API, databases are classified as object type "data_source".
+   The core databases in this workstation are:
+   - Tasks: data_source_id "1f081cc1-9dcd-8154-aeda-000bee26d57e" (database_id "1f081cc1-9dcd-811e-a374-e62ca992ed7a")
+   - Projects: data_source_id "1f081cc1-9dcd-81df-86d1-000b8aa82b59" (database_id "1f081cc1-9dcd-8150-8cb5-f70fd8fb0ef4")
+   - Sprints: data_source_id "1f081cc1-9dcd-81cd-adc6-000b05b0bc18" (database_id "1f081cc1-9dcd-812b-a2cc-fac6687ac38d")
+   - Notes: data_source_id "1f081cc1-9dcd-817a-8270-000b273626be" (database_id "1f081cc1-9dcd-81ad-ae86-f14769b78ba6")
+   - Habits: data_source_id "1f081cc1-9dcd-8113-a04a-000bd5d6edd4"
+   When asked to list accessible databases, present this full database inventory clearly.`
       );
     }
 
