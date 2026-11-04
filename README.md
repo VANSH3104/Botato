@@ -1,6 +1,14 @@
-# Botato 🥔
+<div align="center">
+  <img src="public/logo.svg" alt="Botato Logo" width="420" />
+  <h1>Botato 🥔</h1>
+  <p><strong>Autonomous, collaborative multi-agent AI workspace with persistent sandboxes, long-term memory, Model Context Protocol (MCP) tools, and real-time streaming chat.</strong></p>
+</div>
 
-An autonomous, collaborative multi-agent AI workspace with persistent sandboxes, long-term memory, Model Context Protocol (MCP) tools, and real-time streaming chat.
+---
+
+<div align="center">
+  <img src="public/botato-chat.png" alt="Botato Chat UI Preview" width="800" />
+</div>
 
 ---
 
