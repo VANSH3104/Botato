@@ -603,7 +603,12 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
    - Sprints: data_source_id "1f081cc1-9dcd-81cd-adc6-000b05b0bc18" (database_id "1f081cc1-9dcd-812b-a2cc-fac6687ac38d")
    - Notes: data_source_id "1f081cc1-9dcd-817a-8270-000b273626be" (database_id "1f081cc1-9dcd-81ad-ae86-f14769b78ba6")
    - Habits: data_source_id "1f081cc1-9dcd-8113-a04a-000bd5d6edd4"
-   When asked to list accessible databases, present this full database inventory clearly.`
+   When asked to list accessible databases, present this full database inventory clearly.`,
+        `9. Notion Workstation Structure ("daily tasks" vs OS databases):
+   - "✔ daily tasks" and "📅 active items" are NOT separate database containers. They are views of the Tasks database.
+   - All tasks, daily targets, and active items live inside the Tasks database (database_id: "1f081cc1-9dcd-811e-a374-e62ca992ed7a", data_source_id: "1f081cc1-9dcd-8154-aeda-000bee26d57e").
+   - A "daily task" or "daily target" is any entry in the Tasks database where "Due" date is today.
+   - When the user asks about daily tasks, daily targets, or active items, query the Tasks database directly using mcp_API-query-data-source with data_source_id: "1f081cc1-9dcd-8154-aeda-000bee26d57e".`
       );
     }
 
@@ -626,7 +631,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
       const isLatestUser = index === windowedMessages.length - 1 && msg.role === "user";
 
       if (typeof msg.content === "string") {
-        const maxLen = isLatestUser ? 500 : 150;
+        const maxLen = isLatestUser ? 4000 : 300;
         if (msg.content.length > maxLen) {
           return { ...msg, content: msg.content.slice(0, maxLen) + "\n...[truncated]" };
         }
@@ -637,7 +642,7 @@ ${userOtherBots.map((b) => `  * @${b.name} (${b.job || "Specialist"})`).join("\n
         const compactedParts = msg.content.map((part) => {
           const p = part as Record<string, unknown>;
           if (p.type === "text" && typeof p.text === "string") {
-            const maxLen = isLatestUser ? 500 : 150;
+            const maxLen = isLatestUser ? 4000 : 300;
             if (p.text.length > maxLen) {
               return { ...p, text: p.text.slice(0, maxLen) + "\n...[truncated]" };
             }
